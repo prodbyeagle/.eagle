@@ -1,62 +1,62 @@
 param (
     [Parameter(Mandatory = $false)]
-    [ValidateSet("s", "v", "e", "h", "help")]
-    [string]$option = "h"
+    [ValidateSet("-s", "-v", "-e", "-h", "help")]
+    [string]$option = "-h"
 )
 
 function Show-Help {
-    Write-Host "`nVerfügbare Befehle:" -ForegroundColor Yellow
-    Write-Host "  s    : Installiert Spicetify" -ForegroundColor Cyan
-    Write-Host "  v    : Startet oder lädt VencordInstallerCli.exe" -ForegroundColor Cyan
-    Write-Host "  e    : Führt '@library Check' aus (Platzhalter)" -ForegroundColor Cyan
-    Write-Host "  h    : Zeigt diese Hilfe an" -ForegroundColor Cyan
+    Write-Host "`nAvailable commands:" -ForegroundColor Yellow
+    Write-Host "  -s    : Installs Spicetify" -ForegroundColor Cyan
+    Write-Host "  -v    : Launches or downloads VencordInstallerCli.exe" -ForegroundColor Cyan
+    Write-Host "  -e    : Runs '@library Check' (placeholder)" -ForegroundColor Cyan
+    Write-Host "  -h    : Displays this help message" -ForegroundColor Cyan
 }
 
 switch ($option.ToLower()) {
-    "e" {
-        Write-Host "@library Check wurde gestartet (Platzhalter)" -ForegroundColor Cyan
-        # TODO: @library Check implementation here
+    "-e" {
+        Write-Host "@library Check has started (placeholder)" -ForegroundColor Cyan
+        # TODO: Implement @library Check logic here
     }
-    "s" {
-        Write-Host "Starte Spicetify-Installer..." -ForegroundColor Cyan
+    "-s" {
+        Write-Host "Starting Spicetify installer..." -ForegroundColor Cyan
         try {
             Invoke-WebRequest -UseBasicParsing -Uri "https://raw.githubusercontent.com/spicetify/cli/main/install.ps1" | Invoke-Expression
-            Write-Host "✅ Spicetify erfolgreich installiert!" -ForegroundColor Green
+            Write-Host "✅ Spicetify successfully installed!" -ForegroundColor Green
         }
         catch {
-            Write-Host "❌ Fehler beim Installieren von Spicetify: $_" -ForegroundColor Red
+            Write-Host "❌ Error installing Spicetify: $_" -ForegroundColor Red
         }
     }
-    "v" {
+    "-v" {
         $userProfile = $env:USERPROFILE
         $vencordDir = "$userProfile\Vencord"
         $vencordExe = "$vencordDir\VencordInstallerCli.exe"
         $vencordUrl = "https://github.com/Vendicated/VencordInstaller/releases/latest/download/VencordInstallerCli.exe"
 
         if (-not (Test-Path $vencordExe)) {
-            Write-Host "VencordInstallerCli.exe nicht gefunden. Lade herunter..." -ForegroundColor Yellow
+            Write-Host "VencordInstallerCli.exe not found. Downloading..." -ForegroundColor Yellow
             try {
                 New-Item -ItemType Directory -Force -Path $vencordDir | Out-Null
                 Invoke-WebRequest -Uri $vencordUrl -OutFile $vencordExe
-                Write-Host "✅ VencordInstallerCli.exe heruntergeladen." -ForegroundColor Green
+                Write-Host "✅ VencordInstallerCli.exe successfully downloaded." -ForegroundColor Green
             }
             catch {
-                Write-Host "❌ Fehler beim Herunterladen: $_" -ForegroundColor Red
+                Write-Host "❌ Error downloading Vencord: $_" -ForegroundColor Red
                 return
             }
         }
 
-        Write-Host "Starte VencordInstallerCli.exe..." -ForegroundColor Cyan
+        Write-Host "Launching VencordInstallerCli.exe..." -ForegroundColor Cyan
         Start-Process $vencordExe
     }
-    "h" {
+    "-h" {
         Show-Help
     }
     "help" {
         Show-Help
     }
     default {
-        Write-Host "❌ Unbekannter Befehl: '$option'" -ForegroundColor Red
+        Write-Host "❌ Unknown command: '$option'" -ForegroundColor Red
         Show-Help
     }
 }

@@ -1,20 +1,19 @@
-# === Einstellungen ===
 $scriptPath = "C:\Scripts"
-$eagleUrl = "https://raw.githubusercontent.com/dein-user/dein-repo/main/eagle.ps1"
+$eagleUrl = "https://raw.githubusercontent.com/prodbyeagle/eaglePowerShell/refs/heads/main/eagle.ps1"
 $eagleLocalPath = "$scriptPath\eagle.ps1"
 
 if (!(Test-Path $scriptPath)) {
-    Write-Host "📁 Erstelle Skript-Ordner: $scriptPath"
+    Write-Host "📁 Creating script directory: $scriptPath"
     New-Item -ItemType Directory -Path $scriptPath -Force | Out-Null
 }
 
 try {
-    Write-Host "⬇ Lade eagle.ps1 von $eagleUrl ..." -ForegroundColor Cyan
+    Write-Host "⬇ Downloading eagle.ps1 from $eagleUrl ..." -ForegroundColor Cyan
     Invoke-WebRequest -Uri $eagleUrl -OutFile $eagleLocalPath -UseBasicParsing
-    Write-Host "✅ eagle.ps1 gespeichert unter: $eagleLocalPath" -ForegroundColor Green
+    Write-Host "✅ eagle.ps1 saved at: $eagleLocalPath" -ForegroundColor Green
 }
 catch {
-    Write-Host "❌ Fehler beim Laden von eagle.ps1: $_" -ForegroundColor Red
+    Write-Host "❌ Error while downloading eagle.ps1: $_" -ForegroundColor Red
     exit 1
 }
 
@@ -25,22 +24,21 @@ if (!(Test-Path $profilePath)) {
 
 $aliasLine = "Set-Alias eagle `"$eagleLocalPath`""
 if (-not (Get-Content $profilePath | Select-String -SimpleMatch $aliasLine)) {
-    Write-Host "🔧 Füge Alias 'eagle' zum PowerShell-Profil hinzu..."
+    Write-Host "🔧 Adding alias 'eagle' to PowerShell profile..."
     Add-Content -Path $profilePath -Value "`n$aliasLine"
-    Write-Host "✅ Alias hinzugefügt. Bitte starte PowerShell neu."
+    Write-Host "✅ Alias added. Please restart PowerShell to apply changes."
 }
 else {
-    Write-Host "ℹ Alias 'eagle' ist bereits im Profil vorhanden."
+    Write-Host "ℹ Alias 'eagle' is already present in your PowerShell profile."
 }
 
-# === Ordner zu PATH hinzufügen ===
 if ($env:Path -notlike "*$scriptPath*") {
-    Write-Host "🔧 Füge $scriptPath zur PATH-Umgebungsvariablen hinzu..."
+    Write-Host "🔧 Adding $scriptPath to PATH environment variable..."
     [Environment]::SetEnvironmentVariable("Path", $env:Path + ";$scriptPath", [EnvironmentVariableTarget]::User)
-    Write-Host "✅ PATH erfolgreich aktualisiert. Bitte PowerShell neu starten."
+    Write-Host "✅ PATH updated successfully. Please restart PowerShell to apply changes."
 }
 else {
-    Write-Host "ℹ $scriptPath ist bereits im PATH enthalten."
+    Write-Host "ℹ $scriptPath is already in the system PATH."
 }
 
-Write-Host "`n🎉 Installation abgeschlossen! Benutze den Befehl 'eagle -option s/v/e'" -ForegroundColor Green
+Write-Host "`n🎉 Installation complete! You can now use the command: 'eagle -s/-v/-e'" -ForegroundColor Green
