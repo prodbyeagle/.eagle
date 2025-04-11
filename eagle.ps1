@@ -7,9 +7,9 @@ param (
 function Show-Help {
     Write-Host "`nAvailable commands:" -ForegroundColor Yellow
     Write-Host "  spicetify    : Installs Spicetify" -ForegroundColor Cyan
-    Write-Host "  vencord      : Launches or downloads VencordInstallerCli.exe" -ForegroundColor Cyan
-    Write-Host "  update       : Checks for updates to eagle.ps1 and installs if needed" -ForegroundColor Cyan
-    Write-Host "  uninstall    : Removes eagle.ps1 and cleans up the alias and folder" -ForegroundColor Cyan
+    Write-Host "  vencord      : Launches or downloads the Vencord Installer" -ForegroundColor Cyan
+    Write-Host "  update       : Checks for updates to the [at]eagle PS and installs if needed" -ForegroundColor Cyan
+    Write-Host "  uninstall    : Removes [at]eagle PS and cleans up the alias and folder" -ForegroundColor Cyan
     Write-Host "  help         : Displays this help message" -ForegroundColor Cyan
 }
 
@@ -43,7 +43,7 @@ switch ($option.ToLower()) {
             }
         }
 
-        Write-Host "Launching VencordInstallerCli.exe..." -ForegroundColor Cyan
+        Write-Host "Launching Vencord Installer..." -ForegroundColor Cyan
         Start-Process $vencordExe
     }
     "update" {
