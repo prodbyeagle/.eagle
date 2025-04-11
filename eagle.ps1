@@ -1,24 +1,20 @@
 param (
     [Parameter(Mandatory = $false)]
-    [ValidateSet("-s", "-v", "-e", "-u", "-h", "help")]
-    [string]$option = "-h"
+    [ValidateSet("spicetify", "vencord", "update", "uninstall", "help")]
+    [string]$option = "help"
 )
 
 function Show-Help {
     Write-Host "`nAvailable commands:" -ForegroundColor Yellow
-    Write-Host "  -s    : Installs Spicetify" -ForegroundColor Cyan
-    Write-Host "  -v    : Launches or downloads VencordInstallerCli.exe" -ForegroundColor Cyan
-    Write-Host "  -e    : Runs '@library Check' (placeholder)" -ForegroundColor Cyan
-    Write-Host "  -u    : Checks for updates to eagle.ps1 and installs if needed" -ForegroundColor Cyan
-    Write-Host "  -h    : Displays this help message" -ForegroundColor Cyan
+    Write-Host "  spicetify    : Installs Spicetify" -ForegroundColor Cyan
+    Write-Host "  vencord      : Launches or downloads VencordInstallerCli.exe" -ForegroundColor Cyan
+    Write-Host "  update       : Checks for updates to eagle.ps1 and installs if needed" -ForegroundColor Cyan
+    Write-Host "  uninstall    : Removes eagle.ps1 and cleans up the alias and folder" -ForegroundColor Cyan
+    Write-Host "  help         : Displays this help message" -ForegroundColor Cyan
 }
 
 switch ($option.ToLower()) {
-    "-e" {
-        Write-Host "@library Check has started (placeholder)" -ForegroundColor Cyan
-        # TODO: Implement @library Check logic here
-    }
-    "-s" {
+    "spicetify" {
         Write-Host "Starting Spicetify installer..." -ForegroundColor Cyan
         try {
             Invoke-WebRequest -UseBasicParsing -Uri "https://raw.githubusercontent.com/spicetify/cli/main/install.ps1" | Invoke-Expression
@@ -28,7 +24,7 @@ switch ($option.ToLower()) {
             Write-Host "❌ Error installing Spicetify: $_" -ForegroundColor Red
         }
     }
-    "-v" {
+    "vencord" {
         $userProfile = $env:USERPROFILE
         $vencordDir = "$userProfile\Vencord"
         $vencordExe = "$vencordDir\VencordInstallerCli.exe"
@@ -50,7 +46,7 @@ switch ($option.ToLower()) {
         Write-Host "Launching VencordInstallerCli.exe..." -ForegroundColor Cyan
         Start-Process $vencordExe
     }
-    "-u" {
+    "update" {
         $localScript = $MyInvocation.MyCommand.Path
         $remoteUrl = "https://raw.githubusercontent.com/prodbyeagle/eaglePowerShell/main/eagle.ps1"
         $tempFile = [System.IO.Path]::GetTempFileName()
@@ -78,8 +74,40 @@ switch ($option.ToLower()) {
             Write-Host "❌ Failed to check or apply update: $_" -ForegroundColor Red
         }
     }
-    "-h" {
-        Show-Help
+    "uninstall" {
+        $scriptPath = "C:\Scripts"
+        $eaglePath = "$scriptPath\eagle.ps1"
+        $profilePath = $PROFILE
+
+        Write-Host "Uninstalling eagle..." -ForegroundColor Cyan
+
+        try {
+            if (Test-Path $eaglePath) {
+                Remove-Item $eaglePath -Force
+                Write-Host "✅ Removed eagle.ps1 from $eaglePath" -ForegroundColor Green
+            }
+            else {
+                Write-Host "ℹ eagle.ps1 not found at $eaglePath" -ForegroundColor Yellow
+            }
+
+            if (Test-Path $profilePath) {
+                $profileContent = Get-Content $profilePath
+                $filteredContent = $profileContent | Where-Object { $_ -notmatch "Set-Alias eagle" }
+
+                Set-Content $profilePath -Value $filteredContent
+                Write-Host "✅ Removed alias from PowerShell profile" -ForegroundColor Green
+            }
+
+            if ((Test-Path $scriptPath) -and ((Get-ChildItem $scriptPath).Count -eq 0)) {
+                Remove-Item $scriptPath -Force
+                Write-Host "✅ Removed empty folder $scriptPath" -ForegroundColor Green
+            }
+
+            Write-Host "🎉 Uninstallation complete." -ForegroundColor Green
+        }
+        catch {
+            Write-Host "❌ Failed to uninstall eagle: $_" -ForegroundColor Red
+        }
     }
     "help" {
         Show-Help
