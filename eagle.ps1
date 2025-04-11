@@ -31,11 +31,11 @@ switch ($option.ToLower()) {
         $vencordUrl = "https://github.com/Vendicated/VencordInstaller/releases/latest/download/VencordInstallerCli.exe"
 
         if (-not (Test-Path $vencordExe)) {
-            Write-Host "VencordInstallerCli.exe not found. Downloading..." -ForegroundColor Yellow
+            Write-Host "Vencord Installer not found. Downloading..." -ForegroundColor Yellow
             try {
                 New-Item -ItemType Directory -Force -Path $vencordDir | Out-Null
                 Invoke-WebRequest -Uri $vencordUrl -OutFile $vencordExe
-                Write-Host "✅ VencordInstallerCli.exe successfully downloaded." -ForegroundColor Green
+                Write-Host "✅ Installer successfully downloaded." -ForegroundColor Green
             }
             catch {
                 Write-Host "❌ Error downloading Vencord: $_" -ForegroundColor Red
@@ -62,10 +62,10 @@ switch ($option.ToLower()) {
             if ($localHash.Hash -ne $remoteHash.Hash) {
                 Write-Host "🔄 Update available! Installing update..." -ForegroundColor Yellow
                 Copy-Item -Path $tempFile -Destination $localScript -Force
-                Write-Host "✅ eagle.ps1 updated successfully!" -ForegroundColor Green
+                Write-Host "✅ [at]eagle PS updated successfully!" -ForegroundColor Green
             }
             else {
-                Write-Host "✅ You already have the latest version of eagle.ps1." -ForegroundColor Green
+                Write-Host "✅ You already have the latest version of [at]eagle PS." -ForegroundColor Green
             }
 
             Remove-Item $tempFile -Force
