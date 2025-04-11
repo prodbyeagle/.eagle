@@ -41,4 +41,4 @@ else {
     Write-Host "ℹ $scriptPath is already in the system PATH."
 }
 
-Write-Host "`n🎉 Installation complete! You can now use the command: 'eagle -s/-v/-e'" -ForegroundColor Green
+Write-Host "`n🎉 Installation complete!" -ForegroundColor Green
