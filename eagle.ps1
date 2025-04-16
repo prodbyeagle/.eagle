@@ -4,7 +4,7 @@ param (
     [string]$option = "help"
 )
 
-$scriptVersion = "1.5.4"
+$scriptVersion = "1.6.0"
 
 function Show-Help {
     Write-Host "`nAvailable commands:" -ForegroundColor Yellow
