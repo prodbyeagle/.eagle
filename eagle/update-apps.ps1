@@ -1,4 +1,3 @@
-# utils-update-all.ps1
 function Test-WingetInstalled {
   Write-Host "🔍 Checking for winget..." -ForegroundColor Cyan
 
