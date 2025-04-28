@@ -3,6 +3,14 @@ function Uninstall-Script {
   $eaglePath = "$scriptPath\eagle.ps1"
   $profilePath = $PROFILE
 
+  Write-Host "🛑 You are about to uninstall eagle." -ForegroundColor Yellow
+  $confirmation = Read-Host "Are you sure you want to continue? (y/n)"
+
+  if ($confirmation.ToLower() -ne 'y' -and $confirmation.ToLower() -ne 'yes') {
+    Write-Host "❌ Uninstallation cancelled." -ForegroundColor Red
+    return
+  }
+
   Write-Host "Uninstalling eagle..." -ForegroundColor Cyan
 
   try {
