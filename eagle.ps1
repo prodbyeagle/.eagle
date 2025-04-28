@@ -19,7 +19,7 @@ switch ($option.ToLower()) {
   "--u" { $option = "update" }
   "--a" { $option = "apps" }
   "--s" { $option = "spicetify" }
-  "--v" { $option = "vencord" }
+  "--ven" { $option = "vencord" }
   "--rem" { $option = "uninstall" }
 }
 
