@@ -1,4 +1,4 @@
-# 🦅 eagle PowerShell
+# [at]eagleShell
 
 A lightweight PowerShell utility to manage tools like **Spicetify**, **Vencord**, and automate basic script handling such as install, update, and uninstall.
 
@@ -58,4 +58,4 @@ This will:
 
 -   Delete `eagle.ps1`
 -   Remove the alias from your PowerShell profile
--   Clean up the `C:\Scripts` folder (if empty)
+-   Clean up the `C:\Scripts` folder (if not empty)
