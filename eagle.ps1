@@ -3,7 +3,7 @@ param (
   [string]$option = "help"
 )
 
-$scriptVersion = "2.0.1"
+$scriptVersion = "2.0.2"
 
 . "$PSScriptRoot\eagle\show-help.ps1"
 . "$PSScriptRoot\eagle\install-spicetify.ps1"
