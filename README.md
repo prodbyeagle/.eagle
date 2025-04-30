@@ -37,14 +37,9 @@ eagle [command]
 
 ### Available Commands:
 
-| Command     | Description                                                                                     |
-| ----------- | ----------------------------------------------------------------------------------------------- |
-| `spicetify` | Installs [Spicetify CLI](https://github.com/spicetify/cli)                                      |
-| `vencord`   | Downloads & runs the latest [Vencord Installer](https://github.com/Vendicated/VencordInstaller) |
-| `update`    | Updates the eagle script if a newer version is available                                        |
-| `uninstall` | Removes eagle, its alias, and cleans up files                                                   |
-| `version`   | Displays the current version                                                                    |
-| `help`      | Shows available commands                                                                        |
+```powershell
+eagle help or eagle -h
+```                                                                    
 
 ---
 
