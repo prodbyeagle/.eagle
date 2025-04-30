@@ -3,7 +3,9 @@ param (
   [string]$option = "help"
 )
 
-$scriptVersion = "2.0.2"
+$currentUser = $env:USERNAME
+$allowedUser = "heypa"
+$scriptVersion = "2.1.3"
 
 . "$PSScriptRoot\eagle\show-help.ps1"
 . "$PSScriptRoot\eagle\install-spicetify.ps1"
@@ -12,6 +14,7 @@ $scriptVersion = "2.0.2"
 . "$PSScriptRoot\eagle\uninstall-script.ps1"
 . "$PSScriptRoot\eagle\show-version.ps1"
 . "$PSScriptRoot\eagle\update-apps.ps1"
+. "$PSScriptRoot\eagle\start-clean.ps1"
 
 switch ($option.ToLower()) {
   "--h" { $option = "help" }
@@ -21,6 +24,7 @@ switch ($option.ToLower()) {
   "--s" { $option = "spicetify" }
   "--ven" { $option = "vencord" }
   "--rem" { $option = "uninstall" }
+  "--c" { $option = "clean" }
 }
 
 switch ($option.ToLower()) {
@@ -30,6 +34,14 @@ switch ($option.ToLower()) {
   "uninstall" { Uninstall-Script }
   "version" { Show-Version -Version $scriptVersion }
   "help" { Show-Help }
+  "clean" {
+    if ($currentUser -eq $allowedUser) {
+      Start-Cleanup
+    }
+    else {
+      Write-Host "❌ The 'clean' command is restricted and cannot be used by this user." -ForegroundColor Red
+    }
+  }
   "apps" {
     Test-WingetInstalled
     Update-All-Applications
