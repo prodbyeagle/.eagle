@@ -27,7 +27,7 @@ function Install-Winget {
     Write-Host "✅ winget installed successfully." -ForegroundColor Green
   }
   catch {
-    Write-Host "❌ Failed to install winget: $_" -ForegroundColor Red
+    Write-Host "❌ Failed to install winget  ( SEND DM TO PRODBYEAGLE ON DISCORD ): $_" -ForegroundColor Red
     exit 1
   }
 }

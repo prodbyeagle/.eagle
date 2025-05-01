@@ -37,6 +37,6 @@ function Uninstall-Script {
     Write-Host "🎉 Uninstallation complete." -ForegroundColor Green
   }
   catch {
-    Write-Host "❌ Failed to uninstall eagle: $_" -ForegroundColor Red
+    Write-Host "❌ Failed to uninstall eagle  ( SEND DM TO PRODBYEAGLE ON DISCORD ): $_" -ForegroundColor Red
   }
 }

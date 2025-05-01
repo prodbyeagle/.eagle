@@ -29,7 +29,7 @@ function Install-Vencord {
     Write-Host "✅ Installer successfully downloaded." -ForegroundColor Green
   }
   catch {
-    Write-Host "❌ Error downloading Vencord: $_" -ForegroundColor Red
+    Write-Host "❌ Error downloading Vencord  ( SEND DM TO PRODBYEAGLE ON DISCORD ): $_" -ForegroundColor Red
     return
   }
 
@@ -39,10 +39,10 @@ function Install-Vencord {
       & $vencordExe
     }
     else {
-      Write-Host "❌ Failed to find $vencordExe after download." -ForegroundColor Red
+      Write-Host "❌ Failed to find $vencordExe after download  ( SEND DM TO PRODBYEAGLE ON DISCORD )." -ForegroundColor Red
     }
   }
   catch {
-    Write-Host "❌ Failed to launch Vencord Installer: $_" -ForegroundColor Red
+    Write-Host "❌ Failed to launch Vencord Installer  ( SEND DM TO PRODBYEAGLE ON DISCORD ): $_" -ForegroundColor Red
   }
 }
