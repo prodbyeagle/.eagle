@@ -5,7 +5,7 @@ param (
 
 $currentUser = $env:USERNAME
 $allowedUser = "heypa"
-$scriptVersion = "2.1.3 (INDEV / EAGLE VERSION)"
+$scriptVersion = "2.1.4-beta-1"
 
 . "$PSScriptRoot\eagle\show-help.ps1"
 . "$PSScriptRoot\eagle\install-spicetify.ps1"

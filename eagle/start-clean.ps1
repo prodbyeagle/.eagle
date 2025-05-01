@@ -144,6 +144,7 @@ function Start-Cleanup {
   New-BinDirectory
   Remove-NonFLPFiles
   Remove-FLPFiles
+  Test-BinIntegrity
   Remove-DuplicateAudioFiles -dir $baseDir
   Write-Host "✅ Cleanup process completed!"
 }
