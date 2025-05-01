@@ -2,72 +2,106 @@ param (
     [switch]$Dev
 )
 
+# Paths
 $scriptPath = "C:\Scripts"
 $eagleUrl = "https://raw.githubusercontent.com/prodbyeagle/eaglePowerShell/refs/heads/main/eagle.ps1"
+$zipUrl = "https://github.com/prodbyeagle/eaglePowerShell/archive/refs/heads/main.zip"
 $eagleLocalSource = "$PSScriptRoot\eagle.ps1"
-$eagleLocalFolder = "$PSScriptRoot\eagle"
-$eagleLocalTarget = "$scriptPath\eagle.ps1"
+$eagleSourceFolder = "$PSScriptRoot\eagle"
+$eagleTargetFile = "$scriptPath\eagle.ps1"
 $eagleTargetFolder = "$scriptPath\eagle"
+$tempZipPath = Join-Path $env:TEMP "eagle-main.zip"
+$tempExtractPath = Join-Path $env:TEMP "eagle-main"
 
-if (!(Test-Path $scriptPath)) {
-    Write-Host "📁 Creating script directory: $scriptPath"
-    New-Item -ItemType Directory -Path $scriptPath -Force | Out-Null
+function New-Directory {
+    param([string]$Path)
+    if (-not (Test-Path $Path)) {
+        New-Item -ItemType Directory -Path $Path -Force | Out-Null
+    }
 }
 
-try {
-    if ($Dev) {
-        Write-Host "⚙ Installing eagle.ps1 from local development source..." -ForegroundColor Yellow
-        Copy-Item -Path $eagleLocalSource -Destination $eagleLocalTarget -Force
+function Invoke-DownloadFile {
+    param([string]$Uri, [string]$OutFile)
+    try {
+        Invoke-WebRequest -Uri $Uri -OutFile $OutFile -UseBasicParsing -ErrorAction Stop
+    }
+    catch {
+        Write-Error "Failed to download $Uri - $_"
+        exit 1
+    }
+}
 
-        if (Test-Path $eagleLocalFolder) {
-            Write-Host "📂 Copying eagle folder..." -ForegroundColor Yellow
-            Copy-Item -Path $eagleLocalFolder -Destination $scriptPath -Recurse -Force
-            Write-Host "✅ eagle folder copied to: $eagleTargetFolder" -ForegroundColor Green
-        }
-        else {
-            Write-Host "❌ Local eagle folder not found. Cannot continue." -ForegroundColor Red
-            exit 1
-        }
-        
-        Write-Host "✅ eagle.ps1 and supporting files installed locally." -ForegroundColor Green
+# 1. Ensure target folder exists
+New-Directory -Path $scriptPath
+
+# 2. Install eagle.ps1
+if ($Dev) {
+    Write-Host "⚙ Installing eagle.ps1 from local source..." -ForegroundColor Yellow
+    Copy-Item -Path $eagleLocalSource -Destination $eagleTargetFile -Force -ErrorAction Stop
+}
+else {
+    Write-Host "⬇ Downloading eagle.ps1 from $eagleUrl" -ForegroundColor Cyan
+    Invoke-DownloadFile -Uri $eagleUrl -OutFile $eagleTargetFile
+}
+Write-Host "✅ eagle.ps1 installed to $eagleTargetFile" -ForegroundColor Green
+
+# 3. Install supporting 'eagle' folder
+if ($Dev) {
+    if (Test-Path $eagleSourceFolder) {
+        Write-Host "📂 Copying local eagle folder..." -ForegroundColor Yellow
+        Copy-Item -Path $eagleSourceFolder -Destination $scriptPath -Recurse -Force -ErrorAction Stop
     }
     else {
-        Write-Host "⬇ Downloading eagle.ps1 from $eagleUrl ..." -ForegroundColor Cyan
-        Invoke-WebRequest -Uri $eagleUrl -OutFile $eagleLocalTarget -UseBasicParsing
-        Write-Host "✅ eagle.ps1 downloaded to: $eagleLocalTarget" -ForegroundColor Green
+        Write-Error "Local eagle folder not found at $eagleSourceFolder"
+        exit 1
     }
 }
-catch {
-    Write-Host "❌ Error during eagle.ps1 installation: $_" -ForegroundColor Red
-    exit 1
+else {
+    Write-Host "⬇ Downloading full repo ZIP to gather eagle folder..." -ForegroundColor Cyan
+    if (Test-Path $tempZipPath) { Remove-Item $tempZipPath -Force }
+    Invoke-DownloadFile -Uri $zipUrl -OutFile $tempZipPath
+
+    # Extract
+    if (Test-Path $tempExtractPath) { Remove-Item $tempExtractPath -Recurse -Force }
+    Expand-Archive -Path $tempZipPath -DestinationPath $tempExtractPath -ErrorAction Stop
+
+    $extractedEagle = Join-Path $tempExtractPath "eaglePowerShell-main\eagle"
+    if (Test-Path $extractedEagle) {
+        Write-Host "📂 Copying eagle folder from ZIP..." -ForegroundColor Yellow
+        Copy-Item -Path $extractedEagle -Destination $scriptPath -Recurse -Force -ErrorAction Stop
+    }
+    else {
+        Write-Error "Cannot find 'eagle' folder inside ZIP at $extractedEagle"
+        exit 1
+    }
+
+    # Cleanup temp
+    Remove-Item $tempZipPath -Force
+    Remove-Item $tempExtractPath -Recurse -Force
 }
+Write-Host "✅ eagle folder installed to $eagleTargetFolder" -ForegroundColor Green
 
-$profilePath = $PROFILE
-if (!(Test-Path $profilePath)) {
-    Write-Host "📄 Creating new PowerShell profile at: $profilePath"
-    New-Item -ItemType File -Path $profilePath -Force | Out-Null
+# 4. Ensure profile alias
+if (-not (Test-Path $PROFILE)) {
+    New-Item -ItemType File -Path $PROFILE -Force | Out-Null
 }
-
-$aliasLine = "Set-Alias eagle `"$eagleLocalTarget`""
-$profileContent = Get-Content $profilePath -ErrorAction SilentlyContinue
-
-if ($profileContent -notcontains $aliasLine) {
-    Write-Host "🔧 Adding alias 'eagle' to PowerShell profile..."
-    Add-Content -Path $profilePath -Value "`n$aliasLine"
-    Write-Host "✅ Alias added. Please restart PowerShell to apply changes." -ForegroundColor Green
+$aliasLine = "Set-Alias eagle `"$eagleTargetFile`""
+if (-not (Select-String -Path $PROFILE -Pattern [regex]::Escape($aliasLine) -Quiet)) {
+    Add-Content -Path $PROFILE -Value "`n$aliasLine"
+    Write-Host "🔧 Alias 'eagle' added to profile ($PROFILE)" -ForegroundColor Green
 }
 else {
-    Write-Host "ℹ Alias 'eagle' already exists in PowerShell profile." -ForegroundColor Yellow
+    Write-Host "ℹ Alias already exists in profile" -ForegroundColor Yellow
 }
 
-$userPath = [Environment]::GetEnvironmentVariable("Path", [EnvironmentVariableTarget]::User)
+# 5. Ensure PATH
+$userPath = [Environment]::GetEnvironmentVariable("Path", "User")
 if ($userPath -notlike "*$scriptPath*") {
-    Write-Host "🔧 Adding $scriptPath to PATH environment variable..."
-    [Environment]::SetEnvironmentVariable("Path", "$userPath;$scriptPath", [EnvironmentVariableTarget]::User)
-    Write-Host "✅ PATH updated successfully. Please restart PowerShell to apply changes." -ForegroundColor Green
+    [Environment]::SetEnvironmentVariable("Path", "$userPath;$scriptPath", "User")
+    Write-Host "🔧 Added $scriptPath to user PATH" -ForegroundColor Green
 }
 else {
-    Write-Host "ℹ $scriptPath is already in the PATH." -ForegroundColor Yellow
+    Write-Host "ℹ $scriptPath already in user PATH" -ForegroundColor Yellow
 }
 
-Write-Host "`n🎉 Installation complete!" -ForegroundColor Green
+Write-Host "`n🎉 Installation complete! Restart PowerShell to apply changes." -ForegroundColor Cyan
