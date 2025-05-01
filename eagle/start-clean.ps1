@@ -1,151 +1,99 @@
-$ErrorActionPreference = "Stop"
+param (
+  [string]$SourceRoot = "D:\BEATS DATA\@prodbyeagle Die Library",
+  [string[]]$AllowedExtensions = @(".mp3", ".wav", ".flac", ".flp"),
+  [string[]]$FolderBlacklist = @("leaks", "FL Studio 21", "bin", "@prodbyn", "BeatsBackup"),
+  [switch]$DryRun
+)
 
-$baseDir = "D:\BEATS DATA\@prodbyeagle Die Library"
-$binDir = Join-Path $baseDir "bin"
-$projectsDir = Join-Path $baseDir "@projects"
-$exportsDir = Join-Path $baseDir "@exports"
-$folderBlacklist = @("FLStudio 21", "leaks", "bin")
-
-function Show-LoadingBar {
-  param ([int]$current, [int]$total)
-  $width = 30
-  $progress = [math]::Floor(($current / $total) * $width)
-  $bar = "[" + ("#" * $progress).PadRight($width, " ") + "]"
-  Write-Host "`r$bar $current / $total" -NoNewline
+function Test-AllowedExtension {
+  param($filePath)
+  return $AllowedExtensions -contains ([IO.Path]::GetExtension($filePath).ToLower())
 }
 
-function New-BinDirectory {
-  if (!(Test-Path $binDir)) {
-    New-Item -ItemType Directory -Path $binDir -Force | Out-Null
-  }
-}
-
-function Move-ToBin {
-  param ([string]$src)
-  $fileName = Split-Path -Leaf $src
-  $dest = Join-Path $binDir $fileName
-  $counter = 1
-  while (Test-Path $dest) {
-    $name = [System.IO.Path]::GetFileNameWithoutExtension($fileName)
-    $ext = [System.IO.Path]::GetExtension($fileName)
-    $dest = Join-Path $binDir "$name`_$counter$ext"
-    $counter++
-  }
-  Move-Item -Path $src -Destination $dest -Force
-}
-
-function Move-FileToSubfolder {
-  param (
-    [string]$filePath,
-    [string]$baseTargetDir
-  )
-  $file = Get-Item -Path $filePath
-  $parentDirName = Split-Path -Leaf (Split-Path $file.DirectoryName)
-  $destDir = Join-Path $baseTargetDir $parentDirName
-
-  if (-not (Test-Path $destDir)) {
-    New-Item -ItemType Directory -Path $destDir -Force | Out-Null
-  }
-
-  $targetPath = Join-Path $destDir $file.Name
-  if ($file.FullName -ne $targetPath) {
-    if (Test-Path $targetPath) {
-      Move-ToBin -src $file.FullName
-    }
-    else {
-      Move-Item -Path $file.FullName -Destination $targetPath -Force
+function Test-BlacklistedFolder {
+  param($folderPath)
+  foreach ($blacklisted in $FolderBlacklist) {
+    if ($folderPath -like "*\$blacklisted\*") {
+      return $true
     }
   }
+  return $false
 }
 
-function Remove-UnwantedFiles {
-  param (
-    [string]$dir,
-    [scriptblock]$shouldRemove,
-    [string]$expectedLocation
-  )
-  if ($folderBlacklist -contains (Split-Path -Leaf $dir)) { return }
+function Get-TargetFolder {
+  param($filePath)
 
-  $items = Get-ChildItem -Path $dir -Recurse -File | Where-Object { $_.Name -notmatch "^desktop(\d*)?\.ini$" }
+  $file = Get-Item $filePath
+  $year = $file.LastWriteTime.Year
 
-  foreach ($item in $items) {
-    try {
-      if (& $shouldRemove $item.Name) {
-        Move-ToBin -src $item.FullName
-      }
-      elseif ($expectedLocation) {
-        Move-FileToSubfolder -filePath $item.FullName -baseTargetDir $expectedLocation
-      }
-    }
-    catch {
-      Write-Error "Error processing file '$($item.FullName)': $_"
-    }
-  }
-}
+  $folderName = "$year @prodbyeagle"
+  $ext = [IO.Path]::GetExtension($filePath).ToLower()
 
-function Remove-NonFLPFiles {
-  Remove-UnwantedFiles -dir $projectsDir -shouldRemove { param($name) [System.IO.Path]::GetExtension($name).ToLower() -ne ".flp" } -expectedLocation $exportsDir
-}
-
-function Remove-FLPFiles {
-  Remove-UnwantedFiles -dir $exportsDir -shouldRemove { param($name) [System.IO.Path]::GetExtension($name).ToLower() -eq ".flp" } -expectedLocation $projectsDir
-}
-
-function Remove-DuplicateAudioFiles {
-  param ([string]$dir)
-
-  $audioFiles = Get-ChildItem -Path $dir -Recurse -File | Where-Object { $_.Extension -in @(".mp3", ".flac", ".wav") }
-
-  $fileGroups = $audioFiles | Group-Object { [System.IO.Path]::GetFileNameWithoutExtension($_.Name) }
-
-  foreach ($group in $fileGroups) {
-    $mp3File = $null
-    $otherFile = $null
-
-    foreach ($file in $group.Group) {
-      if ($file.Extension -eq ".mp3") {
-        $mp3File = $file
-      }
-      elseif ($file.Extension -in @(".flac", ".wav")) {
-        $otherFile = $file
-      }
-    }
-
-    if ($mp3File -and $otherFile) {
-      Write-Host "Found duplicate files: $($mp3File.Name), moving to bin."
-      Move-ToBin -src $mp3File.FullName
-    }
-  }
-}
-
-function Test-BinIntegrity {
-  $binFiles = Get-ChildItem -Path $binDir -File | Where-Object { $_.Name -notmatch "^desktop(\d*)?\.ini$" } | Select-Object -ExpandProperty Name
-  $allFiles = Get-ChildItem -Path $projectsDir, $exportsDir -Recurse -File | Select-Object -ExpandProperty Name
-
-  $missingFiles = @()
-  for ($i = 0; $i -lt $binFiles.Count; $i++) {
-    Show-LoadingBar -current ($i + 1) -total $binFiles.Count
-    if ($binFiles[$i] -notin $allFiles) {
-      $missingFiles += $binFiles[$i]
-    }
-  }
-  Write-Host ""
-
-  if ($missingFiles.Count -eq 0) {
-    Write-Host "✅ Verification passed: No missing files. bin is now safe to delete!"
+  if ($ext -eq ".flp") {
+    return Join-Path "@projects" $folderName
   }
   else {
-    Write-Host "⚠ WARNING: The following files are missing in the original folders:"
-    $missingFiles | ForEach-Object { Write-Host "  $_" }
+    return Join-Path "@exports" $folderName
   }
 }
 
-function Start-Cleanup {
-  Write-Host "🚀 Starting cleanup process..."
-  New-BinDirectory
-  Remove-NonFLPFiles
-  Remove-FLPFiles
-  Remove-DuplicateAudioFiles -dir $baseDir
-  Test-BinIntegrity
-  Write-Host "✅ Cleanup process completed!"
+function rename-Item {
+  param($fileName)
+  return ($fileName -replace '(^(\d{8}\s+)+)', '').Trim()
 }
+
+function Move-FileToYearFolder {
+  param($filePath)
+
+  $targetFolder = Get-TargetFolder -filePath $filePath
+  if (-not $targetFolder) { return }
+
+  $ext = [IO.Path]::GetExtension($filePath)
+  $originalName = [System.IO.Path]::GetFileNameWithoutExtension($filePath)
+
+  $cleanBaseName = rename-Item $originalName
+  $newFileName = "$cleanBaseName$ext"
+
+  $targetDir = Join-Path $SourceRoot $targetFolder
+  $targetPath = Join-Path $targetDir $newFileName
+
+  if (-not (Test-Path $targetDir)) {
+    Write-Host "📁 Creating: $targetDir" -ForegroundColor Cyan
+    New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
+  }
+
+  if ($DryRun) {
+    Write-Host "🔍 Would move: $filePath → $targetPath" -ForegroundColor Yellow
+  }
+  else {
+    Write-Host "✅ Moving: $filePath → $targetPath" -ForegroundColor Green
+    Move-Item -Path $filePath -Destination $targetPath -Force
+  }
+}
+
+
+function Invoke-FolderScan {
+  param($folder)
+
+  Get-ChildItem -Path $folder -Recurse -File | ForEach-Object {
+    $filePath = $_.FullName
+    if (-not (Test-AllowedExtension $filePath)) {
+      Write-Host "🚫 Skipping (ext not allowed): $filePath" -ForegroundColor DarkGray
+      return
+    }
+    if (Test-BlacklistedFolder $filePath) {
+      Write-Host "🚫 Skipping (blacklisted): $filePath" -ForegroundColor DarkRed
+      return
+    }
+    Move-FileToYearFolder -filePath $filePath
+  }
+}
+
+if (-not (Test-Path $SourceRoot)) {
+  Write-Error "❌ Source root does not exist: $SourceRoot"
+  exit 1
+}
+
+Write-Host "`n🎧 Starting scan in: $SourceRoot" -ForegroundColor Cyan
+Invoke-FolderScan -folder $SourceRoot
+Write-Host "`n✅ Completed. DryRun = $DryRun`n" -ForegroundColor Cyan
