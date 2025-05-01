@@ -7,5 +7,5 @@ function Show-Help {
   Write-Host "  version (--v)       : Displays the current version of the eagle script" -ForegroundColor Cyan
   Write-Host "  help (--h)          : Displays this help message" -ForegroundColor Cyan
   Write-Host "  apps (--a)          : Updates all applications via winget" -ForegroundColor Cyan
-  Write-Host "  clean (--c)         : Moves unwanted or duplicate project files to the bin folder" -ForegroundColor Cyan
+  Write-Host "  clean (--c)         : Moves unwanted or duplicate project files to the bin folder (PRODBYEAGLE COMMAND ONLY!!! (WILL WORK ON YOUR MACHINE))" -ForegroundColor Red
 }
