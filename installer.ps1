@@ -2,7 +2,6 @@ param (
     [switch]$Dev
 )
 
-# Paths
 $scriptPath = "C:\Scripts"
 $eagleUrl = "https://raw.githubusercontent.com/prodbyeagle/eaglePowerShell/refs/heads/main/eagle.ps1"
 $zipUrl = "https://github.com/prodbyeagle/eaglePowerShell/archive/refs/heads/main.zip"
@@ -31,10 +30,8 @@ function Invoke-DownloadFile {
     }
 }
 
-# 1. Ensure target folder exists
 New-Directory -Path $scriptPath
 
-# 2. Install eagle.ps1
 if ($Dev) {
     Write-Host "⚙ Installing eagle.ps1 from local source..." -ForegroundColor Yellow
     Copy-Item -Path $eagleLocalSource -Destination $eagleTargetFile -Force -ErrorAction Stop
@@ -45,7 +42,6 @@ else {
 }
 Write-Host "✅ eagle.ps1 installed to $eagleTargetFile" -ForegroundColor Green
 
-# 3. Install supporting 'eagle' folder
 if ($Dev) {
     if (Test-Path $eagleSourceFolder) {
         Write-Host "📂 Copying local eagle folder..." -ForegroundColor Yellow
@@ -61,7 +57,6 @@ else {
     if (Test-Path $tempZipPath) { Remove-Item $tempZipPath -Force }
     Invoke-DownloadFile -Uri $zipUrl -OutFile $tempZipPath
 
-    # Extract
     if (Test-Path $tempExtractPath) { Remove-Item $tempExtractPath -Recurse -Force }
     Expand-Archive -Path $tempZipPath -DestinationPath $tempExtractPath -ErrorAction Stop
 
@@ -75,18 +70,16 @@ else {
         exit 1
     }
 
-    # Cleanup temp
     Remove-Item $tempZipPath -Force
     Remove-Item $tempExtractPath -Recurse -Force
 }
 Write-Host "✅ eagle folder installed to $eagleTargetFolder" -ForegroundColor Green
 
-# 4. Ensure profile alias
 if (-not (Test-Path $PROFILE)) {
     New-Item -ItemType File -Path $PROFILE -Force | Out-Null
 }
 $aliasLine = "Set-Alias eagle `"$eagleTargetFile`""
-if (-not (Select-String -Path $PROFILE -Pattern [regex]::Escape($aliasLine) -Quiet)) {
+if (-not (Select-String -Path $PROFILE -Pattern ([regex]::Escape($aliasLine)) -Quiet)) {
     Add-Content -Path $PROFILE -Value "`n$aliasLine"
     Write-Host "🔧 Alias 'eagle' added to profile ($PROFILE)" -ForegroundColor Green
 }
@@ -94,7 +87,6 @@ else {
     Write-Host "ℹ Alias already exists in profile" -ForegroundColor Yellow
 }
 
-# 5. Ensure PATH
 $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
 if ($userPath -notlike "*$scriptPath*") {
     [Environment]::SetEnvironmentVariable("Path", "$userPath;$scriptPath", "User")
