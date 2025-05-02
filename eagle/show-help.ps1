@@ -1,10 +1,22 @@
 function Show-Help {
-  Write-Host "`nAvailable commands:" -ForegroundColor Yellow
-  Write-Host "  spicetify (--s)     : Installs Spicetify" -ForegroundColor Cyan
-  Write-Host "  vencord (--ven)     : Launches or downloads the Vencord Installer" -ForegroundColor Cyan
-  Write-Host "  update (--u)        : Checks for updates to eagle and installs if needed" -ForegroundColor Cyan
-  Write-Host "  uninstall (--rem)   : Removes eagle and cleans up the alias and folder" -ForegroundColor Cyan
-  Write-Host "  version (--v)       : Displays the current version of the eagle script" -ForegroundColor Cyan
-  Write-Host "  help (--h)          : Displays this help message" -ForegroundColor Cyan
-  Write-Host "  apps (--a)          : Updates all applications via winget" -ForegroundColor Cyan
+  Write-Host ""
+  Write-Host "🦅 eaglePower — Available Commands" -ForegroundColor Yellow
+  Write-Host "─────────────────────────────────────────────"
+
+  $commands = @(
+    @{ Cmd = "spicetify"; Alias = "--s"; Desc = "Installs Spicetify" },
+    @{ Cmd = "vencord"; Alias = "--ven"; Desc = "Launches or downloads the Vencord Installer" },
+    @{ Cmd = "update"; Alias = "--u"; Desc = "Checks for updates to eagle and installs if needed" },
+    @{ Cmd = "uninstall"; Alias = "--rem"; Desc = "Removes eagle and cleans up the alias and folder" },
+    @{ Cmd = "version"; Alias = "--v"; Desc = "Displays the current version of the eagle script" },
+    @{ Cmd = "help"; Alias = "--h"; Desc = "Displays this help message" },
+    @{ Cmd = "apps"; Alias = "--a"; Desc = "Updates all applications via winget" }
+  )
+
+  foreach ($c in $commands) {
+    $line = "{0,-10} {1,-10} : {2}" -f $c.Cmd, "($($c.Alias))", $c.Desc
+    Write-Host "  $line" -ForegroundColor Blue
+  }
+
+  Write-Host "─────────────────────────────────────────────"
 }
