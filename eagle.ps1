@@ -3,7 +3,7 @@ param (
   [string]$option = "help"
 )
 
-$scriptVersion = "2.3.0"
+$scriptVersion = "2.3.1"
 
 $scriptRoot = $PSScriptRoot
 . "$scriptRoot\eagle\show-help.ps1"
