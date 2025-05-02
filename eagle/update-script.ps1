@@ -1,5 +1,5 @@
 function Update-Script {
-  $localFolder = $PSScriptRoot
+  $localFolder = 'C:\Scripts'
   $scriptName = 'eagle.ps1'
   $remoteZipUrl = 'https://github.com/prodbyeagle/eaglePowerShell/archive/refs/heads/main.zip'
   $tempZipPath = Join-Path $env:TEMP "eagle_update.zip"
@@ -7,33 +7,30 @@ function Update-Script {
 
   Write-Host "📦 Checking for updates..." -ForegroundColor Cyan
 
+  Write-Host "Local Folder: $localFolder" -ForegroundColor Yellow
+  Write-Host "Script Path to check: $($localFolder)\$scriptName" -ForegroundColor Yellow
+
   try {
+    Write-Host "🔄 Fetching the latest version from GitHub..." -ForegroundColor Cyan
     Invoke-WebRequest -Uri $remoteZipUrl -OutFile $tempZipPath -UseBasicParsing -ErrorAction Stop
+    Write-Host "✅ Latest version fetched successfully from GitHub." -ForegroundColor Green
+
+    Write-Host "📦 Extracting update package..." -ForegroundColor Cyan
     Expand-Archive -Path $tempZipPath -DestinationPath $tempExtractPath -Force
+    Write-Host "✅ Update package extracted successfully." -ForegroundColor Green
 
     $extractedFolder = Join-Path $tempExtractPath 'eaglePowerShell-main'
-    $localScriptPath = Get-ChildItem -Path $localFolder -Recurse -Filter $scriptName -File -ErrorAction SilentlyContinue |
-    Select-Object -First 1
+    $localScriptPath = Join-Path $localFolder $scriptName
 
-    if (-not $localScriptPath) {
-      $parent = Split-Path -Path $localFolder -Parent
-      $localScriptPath = Get-ChildItem -Path $parent -Recurse -Filter $scriptName -File -ErrorAction SilentlyContinue |
-      Select-Object -First 1
-    }
-
-    if (-not $localScriptPath) {
-      Write-Host "❌ Could not find eagle.ps1 in current or parent folders." -ForegroundColor Red
+    Write-Host "🔍 Checking if local script exists..." -ForegroundColor Cyan
+    if (-not (Test-Path $localScriptPath)) {
+      Write-Host "❌ Could not find eagle.ps1 in the root of the Scripts folder." -ForegroundColor Red
       return
     }
 
-    $localScriptPath = $localScriptPath.FullName
     $remoteScriptPath = Join-Path $extractedFolder $scriptName
 
-    if (-not (Test-Path $localScriptPath)) {
-      Write-Host "❌ Local eagle.ps1 not found: $localScriptPath" -ForegroundColor Red
-      return
-    }
-
+    Write-Host "🔍 Extracting version info..." -ForegroundColor Cyan
     $localVersionLine = Get-Content -Path $localScriptPath | Where-Object { $_ -match '\$scriptVersion\s*=\s*"' }
     $remoteVersionLine = Get-Content -Path $remoteScriptPath | Where-Object { $_ -match '\$scriptVersion\s*=\s*"' }
 
@@ -45,15 +42,26 @@ function Update-Script {
     $localVersion = ($localVersionLine -split '"')[1]
     $remoteVersion = ($remoteVersionLine -split '"')[1]
 
+    Write-Host "📅 Local version: v$localVersion, Remote version: v$remoteVersion" -ForegroundColor Yellow
+
     if ([version]$remoteVersion -gt [version]$localVersion) {
-      Write-Host "🔄 Update available ($localVersion → $remoteVersion). Installing…" -ForegroundColor Yellow
+      Write-Host "🔄 Update available! Local: $localVersion → Remote: $remoteVersion. Installing update…" -ForegroundColor Yellow
 
       $backupPath = "$localFolder-backup-" + (Get-Date -Format "yyyyMMddHHmmss")
+      Write-Host "📦 Creating backup of current script folder..." -ForegroundColor Cyan
       Copy-Item -Path $localFolder -Destination $backupPath -Recurse
+      Write-Host "✅ Backup created at $backupPath" -ForegroundColor Green
 
-      Get-ChildItem -Path $extractedFolder -Recurse | ForEach-Object {
-        $relativePath = $_.FullName.Substring($extractedFolder.Length)
-        $destinationPath = Join-Path $localFolder $relativePath.TrimStart('\')
+      Write-Host "📂 Updating eagle.ps1..." -ForegroundColor Cyan
+      Copy-Item -Path $remoteScriptPath -Destination $localScriptPath -Force
+      Write-Host "✅ eagle.ps1 updated successfully." -ForegroundColor Green
+
+  
+      Write-Host "📂 Updating files in 'eagle' subfolder..." -ForegroundColor Cyan
+      $extractedEagleFolder = Join-Path $extractedFolder 'eagle'
+      Get-ChildItem -Path $extractedEagleFolder -Recurse | ForEach-Object {
+        $relativePath = $_.FullName.Substring($extractedEagleFolder.Length)
+        $destinationPath = Join-Path (Join-Path $localFolder 'eagle') $relativePath.TrimStart('\')
         if ($_.PSIsContainer) {
           if (-not (Test-Path $destinationPath)) {
             New-Item -ItemType Directory -Path $destinationPath | Out-Null
@@ -63,8 +71,11 @@ function Update-Script {
           Copy-Item -Path $_.FullName -Destination $destinationPath -Force
         }
       }
+      Write-Host "✅ Files in 'eagle' subfolder updated." -ForegroundColor Green
 
-      Write-Host "✅ [at]eagle PS updated to v$remoteVersion!" -ForegroundColor Green
+      Write-Host "🧹 Cleaning up backup folder..." -ForegroundColor Cyan
+      Remove-Item -Path $backupPath -Recurse -Force -ErrorAction SilentlyContinue
+      Write-Host "✅ Backup folder deleted successfully." -ForegroundColor Green
     }
     else {
       Write-Host "✅ You already have the latest version (v$localVersion)." -ForegroundColor Green
@@ -74,7 +85,9 @@ function Update-Script {
     Write-Host "❌ Update failed (SEND DM TO PRODBYEAGLE ON DISCORD): $_" -ForegroundColor Red
   }
   finally {
+    Write-Host "🧹 Cleaning up temporary files..." -ForegroundColor Cyan
     Remove-Item -Path $tempZipPath -Force -ErrorAction SilentlyContinue
     Remove-Item -Path $tempExtractPath -Recurse -Force -ErrorAction SilentlyContinue
+    Write-Host "✅ Temporary files cleaned up." -ForegroundColor Green
   }
 }
