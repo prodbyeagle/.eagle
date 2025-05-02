@@ -1,39 +1,80 @@
 function Update-Script {
-  $localScript = $PSCommandPath
+  $localFolder = $PSScriptRoot
+  $scriptName = 'eagle.ps1'
+  $remoteZipUrl = 'https://github.com/prodbyeagle/eaglePowerShell/archive/refs/heads/main.zip'
+  $tempZipPath = Join-Path $env:TEMP "eagle_update.zip"
+  $tempExtractPath = Join-Path $env:TEMP "eagle_update"
 
-  if (-not $localScript) {
-    $localScript = Join-Path $PSScriptRoot 'eagle.ps1'
-  }
-
-  if (-not (Test-Path $localScript)) {
-    Write-Host "❌  ( SEND DM TO PRODBYEAGLE ON DISCORD ) Cannot determine local script path. Tried: $localScript" -ForegroundColor Red
-    return
-  }
-
-  $remoteUrl = 'https://raw.githubusercontent.com/prodbyeagle/eaglePowerShell/main/eagle.ps1'
-  $tempFile = [IO.Path]::GetTempFileName()
-
-  Write-Host "Checking for updates..." -ForegroundColor Cyan
+  Write-Host "📦 Checking for updates..." -ForegroundColor Cyan
 
   try {
-    Invoke-WebRequest -Uri $remoteUrl -OutFile $tempFile -UseBasicParsing
+    Invoke-WebRequest -Uri $remoteZipUrl -OutFile $tempZipPath -UseBasicParsing -ErrorAction Stop
+    Expand-Archive -Path $tempZipPath -DestinationPath $tempExtractPath -Force
 
-    $localHash = Get-FileHash -Path $localScript -Algorithm SHA256
-    $remoteHash = Get-FileHash -Path $tempFile   -Algorithm SHA256
+    $extractedFolder = Join-Path $tempExtractPath 'eaglePowerShell-main'
+    $localScriptPath = Get-ChildItem -Path $localFolder -Recurse -Filter $scriptName -File -ErrorAction SilentlyContinue |
+    Select-Object -First 1
 
-    if ($localHash.Hash -ne $remoteHash.Hash) {
-      Write-Host "🔄 Update available! Installing…" -ForegroundColor Yellow
-      Copy-Item -Path $tempFile -Destination $localScript -Force -ErrorAction Stop
-      Write-Host "✅ [at]eagle PS updated successfully!" -ForegroundColor Green
+    if (-not $localScriptPath) {
+      $parent = Split-Path -Path $localFolder -Parent
+      $localScriptPath = Get-ChildItem -Path $parent -Recurse -Filter $scriptName -File -ErrorAction SilentlyContinue |
+      Select-Object -First 1
+    }
+
+    if (-not $localScriptPath) {
+      Write-Host "❌ Could not find eagle.ps1 in current or parent folders." -ForegroundColor Red
+      return
+    }
+
+    $localScriptPath = $localScriptPath.FullName
+    $remoteScriptPath = Join-Path $extractedFolder $scriptName
+
+    if (-not (Test-Path $localScriptPath)) {
+      Write-Host "❌ Local eagle.ps1 not found: $localScriptPath" -ForegroundColor Red
+      return
+    }
+
+    $localVersionLine = Get-Content -Path $localScriptPath | Where-Object { $_ -match '\$scriptVersion\s*=\s*"' }
+    $remoteVersionLine = Get-Content -Path $remoteScriptPath | Where-Object { $_ -match '\$scriptVersion\s*=\s*"' }
+
+    if (-not $localVersionLine -or -not $remoteVersionLine) {
+      Write-Host "❌ Could not extract script version from one of the files." -ForegroundColor Red
+      return
+    }
+
+    $localVersion = ($localVersionLine -split '"')[1]
+    $remoteVersion = ($remoteVersionLine -split '"')[1]
+
+    if ([version]$remoteVersion -gt [version]$localVersion) {
+      Write-Host "🔄 Update available ($localVersion → $remoteVersion). Installing…" -ForegroundColor Yellow
+
+      $backupPath = "$localFolder-backup-" + (Get-Date -Format "yyyyMMddHHmmss")
+      Copy-Item -Path $localFolder -Destination $backupPath -Recurse
+
+      Get-ChildItem -Path $extractedFolder -Recurse | ForEach-Object {
+        $relativePath = $_.FullName.Substring($extractedFolder.Length)
+        $destinationPath = Join-Path $localFolder $relativePath.TrimStart('\')
+        if ($_.PSIsContainer) {
+          if (-not (Test-Path $destinationPath)) {
+            New-Item -ItemType Directory -Path $destinationPath | Out-Null
+          }
+        }
+        else {
+          Copy-Item -Path $_.FullName -Destination $destinationPath -Force
+        }
+      }
+
+      Write-Host "✅ [at]eagle PS updated to v$remoteVersion!" -ForegroundColor Green
     }
     else {
-      Write-Host "✅ You already have the latest version of [at]eagle PS." -ForegroundColor Green
+      Write-Host "✅ You already have the latest version (v$localVersion)." -ForegroundColor Green
     }
   }
   catch {
-    Write-Host "❌ Failed to check or apply update ( SEND DM TO PRODBYEAGLE ON DISCORD ): $_" -ForegroundColor Red
+    Write-Host "❌ Update failed (SEND DM TO PRODBYEAGLE ON DISCORD): $_" -ForegroundColor Red
   }
   finally {
-    if (Test-Path $tempFile) { Remove-Item $tempFile -Force }
+    Remove-Item -Path $tempZipPath -Force -ErrorAction SilentlyContinue
+    Remove-Item -Path $tempExtractPath -Recurse -Force -ErrorAction SilentlyContinue
   }
 }
