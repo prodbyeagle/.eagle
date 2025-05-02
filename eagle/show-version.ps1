@@ -4,7 +4,7 @@ function Show-Version {
   )
 
   Write-Host ""
-  Write-Host "🦅  eagleShell" -ForegroundColor Yellow
+  Write-Host "🦅 eaglePower" -ForegroundColor Yellow
   Write-Host "────────────────────────────"
   Write-Host "Version        : $Version" -ForegroundColor Green
   Write-Host "Repository     : https://github.com/prodbyeagle/eaglePowerShell" -ForegroundColor Cyan
