@@ -2,25 +2,28 @@ param (
   [Parameter(Mandatory = $false, Position = 0)]
   [string]$option = "help"
 )
-$scriptVersion = "2.2.1"
 
-. "$PSScriptRoot\eagle\show-help.ps1"
-. "$PSScriptRoot\eagle\install-spicetify.ps1"
-. "$PSScriptRoot\eagle\install-vencord.ps1"
-. "$PSScriptRoot\eagle\update-script.ps1"
-. "$PSScriptRoot\eagle\uninstall-script.ps1"
-. "$PSScriptRoot\eagle\show-version.ps1"
+$scriptVersion = "2.3.0"
 
-switch ($option.ToLower()) {
-  "--h" { $option = "help" }
-  "--v" { $option = "version" }
-  "--u" { $option = "update" }
-  "--s" { $option = "spicetify" }
-  "--ven" { $option = "vencord" }
-  "--rem" { $option = "uninstall" }
+$scriptRoot = $PSScriptRoot
+. "$scriptRoot\eagle\show-help.ps1"
+. "$scriptRoot\eagle\install-spicetify.ps1"
+. "$scriptRoot\eagle\install-vencord.ps1"
+. "$scriptRoot\eagle\update-script.ps1"
+. "$scriptRoot\eagle\uninstall-script.ps1"
+. "$scriptRoot\eagle\show-version.ps1"
+
+$normalized = switch ($option.ToLower()) {
+  "--h" { "help" }
+  "--v" { "version" }
+  "--u" { "update" }
+  "--s" { "spicetify" }
+  "--ven" { "vencord" }
+  "--rem" { "uninstall" }
+  default { $option.ToLower() }
 }
 
-switch ($option.ToLower()) {
+switch ($normalized) {
   "spicetify" { Install-Spicetify }
   "vencord" { Install-Vencord }
   "update" { Update-Script }
@@ -28,7 +31,6 @@ switch ($option.ToLower()) {
   "version" { Show-Version -Version $scriptVersion }
   "help" { Show-Help }
   default {
-    Write-Host "❌ Unknown command: '$option'" -ForegroundColor Red
-    Show-Help
+    Write-Host "❌ Unknown command: '$option'. 'eagle help' for all Commands." -ForegroundColor DarkRed
   }
 }
