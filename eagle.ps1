@@ -5,7 +5,7 @@ param (
   [string]$template
 )
 
-$scriptVersion = "2.5.0"
+$scriptVersion = "2.5.1"
 
 $scriptRoot = $PSScriptRoot
 . "$scriptRoot\eagle\show-help.ps1"
@@ -30,7 +30,7 @@ switch ($normalized) {
   "vencord" { Install-Vencord }
   "uninstall" { Uninstall-Script }
   "version" { Show-Version -Version $scriptVersion }
-  "create" { Install-Project -Name $name -Template $template }
+  "create" { Install-Project -name $name -template $template }
   "help" { Show-Help }
   default {
     Write-Host "❌ Unknown command: '$option'. 'eagle help' for all Commands." -ForegroundColor DarkRed
