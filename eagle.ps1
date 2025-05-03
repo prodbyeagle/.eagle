@@ -5,7 +5,7 @@ param (
   [string]$template
 )
 
-$scriptVersion = "2.5.2"
+$scriptVersion = "2.5.3"
 
 #! LOGIC
 
