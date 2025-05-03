@@ -38,7 +38,7 @@ eagle [command]
 ### Available Commands:
 
 ```powershell
-eagle help or eagle -h
+eagle help or eagle --h
 ```                                                                    
 
 ---
@@ -46,7 +46,7 @@ eagle help or eagle -h
 ## 🧼 Uninstall
 
 ```powershell
-eagle uninstall
+eagle uninstall or eagle --rem
 ```
 
 This will:
