@@ -4,13 +4,8 @@ param (
 
 $scriptPath = "C:\Scripts"
 $eagleUrl = "https://raw.githubusercontent.com/prodbyeagle/eaglePowerShell/refs/heads/main/eagle.ps1"
-$zipUrl = "https://github.com/prodbyeagle/eaglePowerShell/archive/refs/heads/main.zip"
 $eagleLocalSource = "$PSScriptRoot\eagle.ps1"
-$eagleSourceFolder = "$PSScriptRoot\eagle"
 $eagleTargetFile = "$scriptPath\eagle.ps1"
-$eagleTargetFolder = "$scriptPath\eagle"
-$tempZipPath = Join-Path $env:TEMP "eagle-main.zip"
-$tempExtractPath = Join-Path $env:TEMP "eagle-main"
 
 function New-Directory {
     param([string]$Path)
@@ -41,39 +36,6 @@ else {
     Invoke-DownloadFile -Uri $eagleUrl -OutFile $eagleTargetFile
 }
 Write-Host "✅ eagle.ps1 installed to $eagleTargetFile" -ForegroundColor Green
-
-if ($Dev) {
-    if (Test-Path $eagleSourceFolder) {
-        Write-Host "📂 Copying local eagle folder..." -ForegroundColor Yellow
-        Copy-Item -Path $eagleSourceFolder -Destination $scriptPath -Recurse -Force -ErrorAction Stop
-    }
-    else {
-        Write-Error "Local eagle folder not found at $eagleSourceFolder"
-        exit 1
-    }
-}
-else {
-    Write-Host "⬇ Downloading full repo ZIP to gather eagle folder..." -ForegroundColor Cyan
-    if (Test-Path $tempZipPath) { Remove-Item $tempZipPath -Force }
-    Invoke-DownloadFile -Uri $zipUrl -OutFile $tempZipPath
-
-    if (Test-Path $tempExtractPath) { Remove-Item $tempExtractPath -Recurse -Force }
-    Expand-Archive -Path $tempZipPath -DestinationPath $tempExtractPath -ErrorAction Stop
-
-    $extractedEagle = Join-Path $tempExtractPath "eaglePowerShell-main\eagle"
-    if (Test-Path $extractedEagle) {
-        Write-Host "📂 Copying eagle folder from ZIP..." -ForegroundColor Yellow
-        Copy-Item -Path $extractedEagle -Destination $scriptPath -Recurse -Force -ErrorAction Stop
-    }
-    else {
-        Write-Error "Cannot find 'eagle' folder inside ZIP at $extractedEagle"
-        exit 1
-    }
-
-    Remove-Item $tempZipPath -Force
-    Remove-Item $tempExtractPath -Recurse -Force
-}
-Write-Host "✅ eagle folder installed to $eagleTargetFolder" -ForegroundColor Green
 
 if (-not (Test-Path $PROFILE)) {
     New-Item -ItemType File -Path $PROFILE -Force | Out-Null
