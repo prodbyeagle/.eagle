@@ -5,7 +5,7 @@ param (
   [string]$template
 )
 
-$scriptVersion = "2.5.0"
+$scriptVersion = "2.5.1"
 
 $scriptRoot = $PSScriptRoot
 . "$scriptRoot\eagle\show-help.ps1"
