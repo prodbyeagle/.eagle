@@ -1,47 +1,47 @@
 function Install-Project {
   param (
-    [string]$Name,
-    [string]$Template
+    [string]$name,
+    [string]$template
   )
 
-  if (-not $Name) {
-    $Name = Read-Host "📝 Enter project name"
+  if (-not $name) {
+    $name = Read-Host "📝 Enter project name"
   }
 
-  if (-not $Template) {
+  if (-not $template) {
     Write-Host "📦 Available templates:" -ForegroundColor Cyan
     Write-Host " - discord" -ForegroundColor Yellow
     Write-Host " - next" -ForegroundColor Yellow
-    $Template = Read-Host "📌 Choose a template"
+    $template = Read-Host "📌 Choose a template"
   }
 
-  $targetRoot = switch ($Template.ToLower()) {
+  $targetRoot = switch ($template.ToLower()) {
     "discord" { "D:\VSCode\2025\Discord" }
     "next" { "D:\VSCode\2025\Frontend" }
     default {
-      Write-Host "❌ Invalid template: '$Template'. Allowed: discord, next" -ForegroundColor Red
+      Write-Host "❌ Invalid template: '$template'. Allowed: discord, next" -ForegroundColor Red
       return
     }
   }
 
-  $projectPath = Join-Path $targetRoot $Name
+  $projectPath = Join-Path $targetRoot $name
   if (Test-Path $projectPath) {
-    Write-Host "⚠️ Project '$Name' already exists at $projectPath" -ForegroundColor Yellow
+    Write-Host "⚠️ Project '$name' already exists at $projectPath" -ForegroundColor Yellow
     return
   }
 
-  $repoUrl = switch ($Template.ToLower()) {
+  $repoUrl = switch ($template.ToLower()) {
     "discord" { "https://github.com/prodbyeagle/EagleBotTemplate.git" }
     "next" { "https://github.com/prodbyeagle/Eagle-NextJS-Template.git" }
   }
 
-  Write-Host "📁 Creating new '$Template' project: $Name" -ForegroundColor Cyan
+  Write-Host "📁 Creating new '$template' project: $name" -ForegroundColor Cyan
   Write-Host "🔗 Cloning from $repoUrl to $projectPath..." -ForegroundColor Gray
 
   git clone $repoUrl $projectPath
 
   if ($LASTEXITCODE -eq 0) {
-    Write-Host "✅ Project '$Name' created at $projectPath" -ForegroundColor Green
+    Write-Host "✅ Project '$name' created at $projectPath" -ForegroundColor Green
   }
   else {
     Write-Host "❌ Git clone failed." -ForegroundColor Red
