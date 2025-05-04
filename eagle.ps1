@@ -5,7 +5,7 @@ param (
   [string]$template
 )
 
-$scriptVersion = "2.5.4"
+$scriptVersion = "2.5.5"
 
 #! LOGIC
 
@@ -87,8 +87,7 @@ function Show-Help {
     @{ Cmd = "update"; Alias = "--u"; Desc = "Checks for updates to eagle and installs if needed" },
     @{ Cmd = "uninstall"; Alias = "--rem"; Desc = "Removes eagle and cleans up the alias and folder" },
     @{ Cmd = "version"; Alias = "--v"; Desc = "Displays the current version of the eagle script" },
-    @{ Cmd = "help"; Alias = "--h"; Desc = "Displays this help message" },
-    @{ Cmd = "apps"; Alias = "--a"; Desc = "Updates all applications via winget" }
+    @{ Cmd = "help"; Alias = "--h"; Desc = "Displays this help message" }
   )
 
   foreach ($c in $commands) {
