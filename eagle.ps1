@@ -5,7 +5,7 @@ param (
   [string]$template
 )
 
-$scriptVersion = "2.5.5"
+$scriptVersion = "2.5.6"
 
 #! LOGIC
 
@@ -205,8 +205,8 @@ function Install-Project {
   }
 
   $repoUrl = switch ($template.ToLower()) {
-    "discord" { "https://github.com/prodbyeagle/EagleBotTemplate.git" }
-    "next" { "https://github.com/prodbyeagle/Eagle-NextJS-Template.git" }
+    "discord" { "https://github.com/prodbyeagle/discord-template.git" }
+    "next" { "https://github.com/prodbyeagle/next-template.git" }
   }
 
   Write-Host "📁 Creating new '$template' project: $name" -ForegroundColor Cyan
