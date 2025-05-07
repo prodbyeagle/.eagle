@@ -1,5 +1,3 @@
-# [at]eagleShell
-
 A lightweight PowerShell utility to manage tools like **Spicetify**, **Vencord**, and automate basic script handling such as install, update, and uninstall.
 
 ## 🚀 Features
