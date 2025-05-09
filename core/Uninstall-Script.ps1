@@ -1,6 +1,7 @@
 function Uninstall-Script {
   $scriptPath = "C:\Scripts"
   $eaglePath = "$scriptPath\eagle.ps1"
+  $coreFolder = "$scriptPath\core"
   $eagleFolder = "$scriptPath\eagle"
   $profilePath = $PROFILE
 
@@ -21,6 +22,14 @@ function Uninstall-Script {
     }
     else {
       Write-Host "ℹ eagle.ps1 not found at $eaglePath" -ForegroundColor Yellow
+    }
+
+    if (Test-Path $coreFolder) {
+      Remove-Item $coreFolder -Recurse -Force
+      Write-Host "✅ Removed core folder and its contents from $coreFolder" -ForegroundColor Green
+    }
+    else {
+      Write-Host "ℹ core folder not found at $coreFolder" -ForegroundColor Yellow
     }
 
     if (Test-Path $eagleFolder) {
@@ -46,6 +55,6 @@ function Uninstall-Script {
     Write-Host "🎉 Uninstallation complete." -ForegroundColor Green
   }
   catch {
-    Write-Host "❌ Failed to uninstall eagle  ( SEND DM TO PRODBYEAGLE ON DISCORD ): $_" -ForegroundColor Red
+    Write-Host "❌ Failed to uninstall eagle (SEND DM TO PRODBYEAGLE ON DISCORD): $_" -ForegroundColor Red
   }
 }
