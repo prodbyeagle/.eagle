@@ -10,4 +10,3 @@ function Show-Version {
   Write-Host "Repository     : https://github.com/prodbyeagle/eaglePowerShell" -ForegroundColor Cyan
   Write-Host "────────────────────────────"
 }
-
