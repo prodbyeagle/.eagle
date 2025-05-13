@@ -2,7 +2,7 @@ function Install-Vencord {
   $userProfile = $env:USERPROFILE
   $vencordDir = Join-Path $userProfile 'Vencord'
   $vencordExe = Join-Path $vencordDir 'VencordInstallerCli.exe'
-  $vencordUrl = "https://github.com/Vendicated/VencordInstaller/releases/latest/download/VencordInstallerCli.exe"
+  $vencordUrl = "https://github.com/prodbyeagle/Vencord/releases/latest/download/VencordInstallerCli.exe"
   $expectedMinSize = 5772800
 
   Write-Host "`n🧩 Checking for Vencord Installer..." -ForegroundColor Yellow
