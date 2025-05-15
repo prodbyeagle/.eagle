@@ -1,51 +1,52 @@
 function Install-Vencord {
-  $userProfile = $env:USERPROFILE
-  $vencordDir = Join-Path $userProfile 'Vencord'
-  $vencordExe = Join-Path $vencordDir 'VencordInstallerCli.exe'
-  $vencordUrl = "https://github.com/prodbyeagle/Vencord/releases/latest/download/VencordInstallerCli.exe"
-  $expectedMinSize = 5772800
+  $ErrorActionPreference = "Stop"
 
-  Write-Host "`n🧩 Checking for Vencord Installer..." -ForegroundColor Yellow
-
-  if (Test-Path $vencordExe) {
-    $fileSize = (Get-Item $vencordExe).Length
-    Write-Host "🔍 Found existing installer at: $vencordExe" -ForegroundColor Cyan
-
-    if ($fileSize -lt $expectedMinSize) {
-      Write-Host "⚠️  File appears to be corrupted (size: $fileSize bytes). Re-downloading..." -ForegroundColor Red
-      Remove-Item $vencordExe -Force -ErrorAction SilentlyContinue
-    }
-    else {
-      Write-Host "✅ Installer is valid. Launching..." -ForegroundColor Green
-      Start-Process -FilePath $vencordExe
-      return
-    }
-  }
-  else {
-    Write-Host "❌ Installer not found. Preparing to download..." -ForegroundColor Yellow
-  }
+  $repoUrl = "https://github.com/prodbyeagle/Vencord"
+  $repoName = "Vencord"
+  $vencordTempDir = Join-Path $env:APPDATA "EagleCord"
+  $vencordCloneDir = Join-Path $vencordTempDir $repoName
 
   try {
-    New-Item -ItemType Directory -Force -Path $vencordDir | Out-Null
-    Write-Host "🌐 Downloading Vencord Installer..." -ForegroundColor Cyan
-    Invoke-WebRequest -Uri $vencordUrl -OutFile $vencordExe -UseBasicParsing -ErrorAction Stop
-    Write-Host "✅ Download completed: $vencordExe" -ForegroundColor Green
+    if (Test-Path $vencordCloneDir) {
+      Set-Location -Path $vencordCloneDir
+      $localHash = git rev-parse HEAD
+      $remoteHash = git ls-remote $repoUrl HEAD | ForEach-Object { $_.Split("`t")[0] }
+
+      if ($localHash -eq $remoteHash) {
+        Write-Host "🔁 Repo is up-to-date (commit: $localHash)" -ForegroundColor Cyan
+      }
+      else {
+        Write-Host "♻️  Updating to latest commit..." -ForegroundColor Yellow
+        git fetch origin
+        git reset --hard origin/main
+      }
+    }
+    else {
+      Write-Host "📁 Cloning fresh copy of repo..." -ForegroundColor Yellow
+      git clone $repoUrl $vencordCloneDir
+      Set-Location -Path $vencordCloneDir
+    }
+
+    Write-Host "`n📦 Installing dependencies..." -ForegroundColor Yellow
+    bun i
+    Write-Host "✅ Dependency installation complete." -ForegroundColor Green
   }
   catch {
-    Write-Host "❌ Failed to download Vencord Installer (SEND DM TO PRODBYEAGLE ON DISCORD): $_" -ForegroundColor Red
+    Write-Host "❌ Setup failed: $_" -ForegroundColor Red
     return
   }
 
   try {
-    if (Test-Path $vencordExe) {
-      Write-Host "🚀 Launching Vencord Installer..." -ForegroundColor Cyan
-      Start-Process -FilePath $vencordExe
-    }
-    else {
-      Write-Host "❌ Installer missing after download: $vencordExe (SEND DM TO PRODBYEAGLE ON DISCORD)" -ForegroundColor Red
-    }
+    Write-Host "`n🛠 Injecting Vencord..." -ForegroundColor Yellow
+    bun buildStandalone
+    bun inject
+    Write-Host "✅ Vencord injected successfully." -ForegroundColor Green
+    Set-Location -Path $HOME
   }
   catch {
-    Write-Host "❌ Failed to launch installer (SEND DM TO PRODBYEAGLE ON DISCORD): $_" -ForegroundColor Red
+    Write-Host "❌ Failed during inject step: $_" -ForegroundColor Red
+    return
   }
+
+  Write-Host "`n🎉 Vencord installation complete." -ForegroundColor Cyan
 }
