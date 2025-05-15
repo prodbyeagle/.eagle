@@ -1,7 +1,3 @@
-param (
-  [switch]$Dev
-)
-
 function Update-Script {
   $localFolder = 'C:\Scripts'
   $scriptName = 'eagle.ps1'
@@ -10,31 +6,22 @@ function Update-Script {
   $tempZipPath = Join-Path $env:TEMP "eagle_update.zip"
   $tempExtractPath = Join-Path $env:TEMP "eagle_update"
 
-  # Path for dev files
-  $devFolder = 'D:\VSCode\2025\Other\eagle'
-  $devScriptPath = Join-Path $devFolder 'eagle.ps1'
-  $devCoreFolder = Join-Path $devFolder 'core'
-
   Write-Host "📦 Checking for updates..." -ForegroundColor Yellow
 
   try {
-    if ($Dev) {
-      Write-Host "⚙ Using local files for update..." -ForegroundColor Cyan
-      $localScriptPath = $devScriptPath
-      $localCoreFolder = $devCoreFolder
-    }
-    else {
-      Write-Host "⬇ Downloading remote files..." -ForegroundColor Cyan
-      Invoke-WebRequest -Uri $remoteZipUrl -OutFile $tempZipPath -UseBasicParsing -ErrorAction Stop
-      Expand-Archive -Path $tempZipPath -DestinationPath $tempExtractPath -Force
+    Write-Host "⬇ Downloading remote files..." -ForegroundColor Cyan
+    Invoke-WebRequest -Uri $remoteZipUrl -OutFile $tempZipPath -UseBasicParsing -ErrorAction Stop
+    Expand-Archive -Path $tempZipPath -DestinationPath $tempExtractPath -Force
 
-      $extractedFolder = Join-Path $tempExtractPath 'eaglePowerShell-main'
-      $localScriptPath = Join-Path $localFolder $scriptName
-      $localCoreFolder = Join-Path $localFolder $coreFolderName
+    $remoteScriptPath = Get-ChildItem -Path $tempExtractPath -Filter $scriptName -Recurse |
+    Select-Object -First 1 -ExpandProperty FullName
 
-      $remoteScriptPath = Join-Path $extractedFolder $scriptName
-      $remoteCoreFolder = Join-Path $extractedFolder $coreFolderName
-    }
+    $remoteCoreFolder = Get-ChildItem -Path $tempExtractPath -Directory -Recurse |
+    Where-Object { $_.Name -ieq $coreFolderName } |
+    Select-Object -First 1 -ExpandProperty FullName
+
+    $localScriptPath = Join-Path $localFolder $scriptName
+    $localCoreFolder = Join-Path $localFolder $coreFolderName
 
     if (-not (Test-Path $localScriptPath)) {
       Write-Host "❌ Could not find eagle.ps1 in the root of the Scripts folder." -ForegroundColor Red
@@ -42,12 +29,7 @@ function Update-Script {
     }
 
     $localVersionLine = Get-Content -Path $localScriptPath | Where-Object { $_ -match '\$scriptVersion\s*=\s*"' }
-    if ($Dev) {
-      $remoteVersionLine = Get-Content -Path $localScriptPath | Where-Object { $_ -match '\$scriptVersion\s*=\s*"' }
-    }
-    else {
-      $remoteVersionLine = Get-Content -Path $remoteScriptPath | Where-Object { $_ -match '\$scriptVersion\s*=\s*"' }
-    }
+    $remoteVersionLine = Get-Content -Path $remoteScriptPath | Where-Object { $_ -match '\$scriptVersion\s*=\s*"' }
 
     if (-not $localVersionLine -or -not $remoteVersionLine) {
       Write-Host "❌ Could not extract script version from one of the files." -ForegroundColor Red
@@ -60,11 +42,9 @@ function Update-Script {
     if ([version]$remoteVersion -gt [version]$localVersion) {
       Write-Host "🔄 Update available! Local: $localVersion → Remote: $remoteVersion. Installing update…" -ForegroundColor Yellow
 
-      # Update eagle.ps1
       Copy-Item -Path $remoteScriptPath -Destination $localScriptPath -Force
       Write-Host "✅ eagle.ps1 updated successfully." -ForegroundColor Green
 
-      # Update core folder
       if (Test-Path $localCoreFolder) {
         Remove-Item $localCoreFolder -Recurse -Force
         Write-Host "✅ Removed old core folder from $localCoreFolder" -ForegroundColor Green
@@ -83,13 +63,10 @@ function Update-Script {
     }
   }
   catch {
-    Write-Host "❌ Update failed (SEND DM TO PRODBYEAGLE ON DISCORD): $_" -ForegroundColor Red
+    Write-Host "❌ Update failed: $_" -ForegroundColor Red
   }
   finally {
-    if (-not $Dev) {
-      Remove-Item -Path $tempZipPath -Force -ErrorAction SilentlyContinue
-      Remove-Item -Path $tempExtractPath -Recurse -Force -ErrorAction SilentlyContinue
-    }
+    Remove-Item -Path $tempZipPath -Force -ErrorAction SilentlyContinue
+    Remove-Item -Path $tempExtractPath -Recurse -Force -ErrorAction SilentlyContinue
   }
 }
-

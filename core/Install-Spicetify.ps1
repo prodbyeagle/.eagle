@@ -13,6 +13,6 @@ function Install-Spicetify {
     Write-Host "✅ Spicetify installed successfully!" -ForegroundColor Green
   }
   catch {
-    Write-Host "❌ Failed to install Spicetify (SEND DM TO PRODBYEAGLE ON DISCORD): $_" -ForegroundColor Red
+    Write-Host "❌ Failed to install Spicetify: $_" -ForegroundColor Red
   }
 }
