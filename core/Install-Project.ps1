@@ -1,3 +1,46 @@
+function Show-TemplateSelector {
+  $options = @("discord", "next")
+  $selectedIndex = 0
+
+  function Render {
+    Clear-Host
+    Write-Host "📌 Choose a template using ↑ ↓ and press Enter:`n" -ForegroundColor Cyan
+    for ($i = 0; $i -lt $options.Count; $i++) {
+      if ($i -eq $selectedIndex) {
+        Write-Host "> $($options[$i])" -ForegroundColor Yellow
+      }
+      else {
+        Write-Host "  $($options[$i])"
+      }
+    }
+  }
+
+  [Console]::CursorVisible = $false
+  try {
+    while ($true) {
+      Render
+      $key = [Console]::ReadKey($true)
+
+      if ($key.Key -eq [ConsoleKey]::UpArrow -and $selectedIndex -gt 0) {
+        $selectedIndex--
+      }
+      elseif ($key.Key -eq [ConsoleKey]::DownArrow -and $selectedIndex -lt ($options.Count - 1)) {
+        $selectedIndex++
+      }
+      elseif ($key.Key -eq [ConsoleKey]::Enter) {
+        break
+      }
+      # else ignore any other keys
+    }
+
+    return $options[$selectedIndex]
+  }
+  finally {
+    [Console]::CursorVisible = $true
+    Clear-Host
+  }
+}
+
 function Install-Project {
   param (
     [string]$name,
@@ -9,10 +52,7 @@ function Install-Project {
   }
 
   if (-not $template) {
-    Write-Host "📦 Available templates:" -ForegroundColor Cyan
-    Write-Host " - discord" -ForegroundColor Yellow
-    Write-Host " - next" -ForegroundColor Yellow
-    $template = Read-Host "📌 Choose a template"
+    $template = Show-TemplateSelector
   }
 
   $targetRoot = switch ($template.ToLower()) {
@@ -36,13 +76,10 @@ function Install-Project {
   }
 
   Write-Host "📁 Creating new '$template' project: $name" -ForegroundColor Cyan
-  Write-Host "🔗 Cloning from $repoUrl to $projectPath..." -ForegroundColor Gray
-
   git clone $repoUrl $projectPath
 
   if ($LASTEXITCODE -eq 0) {
     Write-Host "✅ Project '$name' created at $projectPath" -ForegroundColor Green
-
     Set-Location -Path $projectPath
 
     $gitFolder = Join-Path $projectPath ".git"
@@ -51,7 +88,7 @@ function Install-Project {
       Write-Host "🧹 Removed .git" -ForegroundColor Magenta
     }
 
-    Write-Host "📦 Running 'bun update --latest'..." -ForegroundColor Gray
+    Write-Host "📦 Updating / Installing Packages..." -ForegroundColor Gray
     bun update --latest
 
     if ($LASTEXITCODE -eq 0) {
