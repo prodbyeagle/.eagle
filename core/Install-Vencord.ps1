@@ -1,7 +1,7 @@
 function Install-Vencord {
   $ErrorActionPreference = "Stop"
 
-  $repoUrl = "https://github.com/prodbyeagle/Vencord"
+  $repoUrl = "https://github.com/prodbyeagle/cord"
   $repoName = "Vencord"
   $vencordTempDir = Join-Path $env:APPDATA "EagleCord"
   $vencordCloneDir = Join-Path $vencordTempDir $repoName
@@ -37,10 +37,10 @@ function Install-Vencord {
   }
 
   try {
-    Write-Host "`n🛠 Injecting Vencord..." -ForegroundColor Yellow
+    Write-Host "`n🦅 Injecting EagleCord..." -ForegroundColor Yellow
     bun buildStandalone
     bun inject
-    Write-Host "✅ Vencord injected successfully." -ForegroundColor Green
+    Write-Host "✅ EagleCord injected successfully." -ForegroundColor Green
     Set-Location -Path $HOME
   }
   catch {
