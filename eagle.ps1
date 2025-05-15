@@ -5,7 +5,7 @@ param (
   [string]$template
 )
 
-$scriptVersion = "2.6.5"
+$scriptVersion = "2.6.7"
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
 $coreDir = Join-Path $scriptDir "core"
