@@ -1,4 +1,8 @@
 function Install-Vencord {
+  param (
+    [switch]$re
+  )
+
   $ErrorActionPreference = "Stop"
 
   $repoUrl = "https://github.com/prodbyeagle/cord"
@@ -7,6 +11,22 @@ function Install-Vencord {
   $vencordCloneDir = Join-Path $vencordTempDir $repoName
 
   try {
+    Write-Host "🔍 Checking for Bun runtime..." -ForegroundColor Cyan
+    bun --version > $null 2>&1
+    if ($LASTEXITCODE -ne 0) {
+      Write-Host "📥 Bun not found. Installing Bun..." -ForegroundColor Yellow
+      powershell -c "irm bun.sh/install.ps1 | iex"
+
+      $env:PATH = [System.Environment]::GetEnvironmentVariable("PATH", "User")
+    } else {
+      Write-Host "✅ Bun is already installed." -ForegroundColor Green
+    }
+
+    if ($re -and (Test-Path $vencordCloneDir)) {
+      Write-Host "🗑️  Removing existing repo directory for reinstall..." -ForegroundColor Yellow
+      Remove-Item -Recurse -Force -Path $vencordCloneDir
+    }
+
     if (Test-Path $vencordCloneDir) {
       Set-Location -Path $vencordCloneDir
       $localHash = git rev-parse HEAD
@@ -27,8 +47,13 @@ function Install-Vencord {
       Set-Location -Path $vencordCloneDir
     }
 
+    if (Test-Path "./dist") {
+      Write-Host "🧹 Cleaning dist folder..." -ForegroundColor Magenta
+      Remove-Item -Recurse -Force "./dist"
+    }
+
     Write-Host "`n📦 Installing dependencies..." -ForegroundColor Yellow
-    bun i
+    bun install
     Write-Host "✅ Dependency installation complete." -ForegroundColor Green
   }
   catch {
@@ -38,7 +63,7 @@ function Install-Vencord {
 
   try {
     Write-Host "`n🦅 Injecting EagleCord..." -ForegroundColor Yellow
-    bun buildStandalone
+    bun run build
     bun inject
     Write-Host "✅ EagleCord injected successfully." -ForegroundColor Green
     Set-Location -Path $HOME
