@@ -5,7 +5,7 @@ param (
   [string]$template
 )
 
-$scriptVersion = "2.6.8"
+$scriptVersion = "2.7.0"
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
 $coreDir = Join-Path $scriptDir "core"
@@ -19,6 +19,7 @@ $normalized = switch ($option.ToLower()) {
   "--v" { "version" }
   "--s" { "spicetify" }
   "--ven" { "vencord" }
+  "--ven:dev" { "vencord:dev" }
   "--u" { "update" }
   "--rem" { "uninstall" }
   "--c" { "create" }
@@ -28,6 +29,7 @@ $normalized = switch ($option.ToLower()) {
 switch ($normalized) {
   "spicetify" { Install-Spicetify }
   "vencord" { Install-Vencord }
+  "vencord:dev" { Install-Vencord -re }
   "uninstall" { Uninstall-Script }
   "version" { Show-Version -Version $scriptVersion }
   "update" { Update-Script }
