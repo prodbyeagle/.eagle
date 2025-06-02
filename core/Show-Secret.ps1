@@ -1,49 +1,53 @@
 function Show-Animation {
   [CmdletBinding()]
   param (
-    [int]$FrameDelayMs = 100
+    [int]$FrameDelayMs = 40
   )
 
   try {
     [Console]::CursorVisible = $false
-    $Host.UI.RawUI.WindowTitle = "🦅 EAGLE VISION - SECRET MODE 🦅"
+    $Host.UI.RawUI.WindowTitle = "eagle was here."
 
     $angle = 0
     while ($true) {
-      # Dynamically get console size each frame in case of resize
       $consoleWidth = $Host.UI.RawUI.WindowSize.Width
       $consoleHeight = $Host.UI.RawUI.WindowSize.Height
 
-      # Adjusted center offset (lower the cube rendering area)
+      $scaleFactor = [Math]::Min($consoleWidth, $consoleHeight) * 0.3
+      $half = $scaleFactor / 2
+
       $centerX = [int]($consoleWidth / 2)
-      $centerY = [int]($consoleHeight / 2 + 4)  # ⬅ Increase to lower the cube
+      $centerY = [int]($consoleHeight / 2 + 2)
 
-      Clear-Host
+      # $Host.UI.RawUI.CursorPosition = @{X = 0; Y = 0 }
 
-      $cos = [Math]::Cos($angle)
-      $sin = [Math]::Sin($angle)
+      $cosY = [Math]::Cos($angle)
+      $sinY = [Math]::Sin($angle)
+      $cosX = [Math]::Cos($angle * 0.5)
+      $sinX = [Math]::Sin($angle * 0.5)
 
       $vertices = @(
-        @(-15, -15, -15), @(15, -15, -15), @(15, 15, -15), @(-15, 15, -15),
-        @(-15, -15, 15), @(15, -15, 15), @(15, 15, 15), @(-15, 15, 15)
+        @(-1, -1, -1), @(1, -1, -1), @(1, 1, -1), @(-1, 1, -1),
+        @(-1, -1, 1), @(1, -1, 1), @(1, 1, 1), @(-1, 1, 1)
       )
 
       $rotated = @()
       foreach ($v in $vertices) {
-        $x = $v[0]; $y = $v[1]; $z = $v[2]
+        $x = $v[0] * $half
+        $y = $v[1] * $half
+        $z = $v[2] * $half
 
-        # Y rotation
-        $newX = $x * $cos - $z * $sin
-        $newZ = $x * $sin + $z * $cos
+        $rx = $x * $cosY - $z * $sinY
+        $rz = $x * $sinY + $z * $cosY
 
-        # X rotation
-        $newY = $y * [Math]::Cos($angle * 0.5) - $newZ * [Math]::Sin($angle * 0.5)
-        $finalZ = $y * [Math]::Sin($angle * 0.5) + $newZ * [Math]::Cos($angle * 0.5)
+        $ry = $y * $cosX - $rz * $sinX
+        $finalZ = $y * $sinX + $rz * $cosX
 
-        $distance = 70  # 🔧 Adjusted projection distance
+        $distance = $scaleFactor * 1.5
         $scale = $distance / ($distance + $finalZ)
-        $screenX = [int]($newX * $scale) + $centerX
-        $screenY = [int]($newY * $scale) + $centerY
+        $screenX = [int]($rx * $scale) + $centerX
+        $aspectCorrection = 0.5
+        $screenY = [int]($ry * $scale * $aspectCorrection) + $centerY
 
         $rotated += , @($screenX, $screenY, $finalZ)
       }
@@ -59,6 +63,7 @@ function Show-Animation {
       foreach ($edge in $edges) {
         $v1 = $rotated[$edge[0]]
         $v2 = $rotated[$edge[1]]
+
         $x1 = $v1[0]; $y1 = $v1[1]; $z1 = $v1[2]
         $x2 = $v2[0]; $y2 = $v2[1]; $z2 = $v2[2]
 
@@ -67,8 +72,8 @@ function Show-Animation {
         $sx = if ($x1 -lt $x2) { 1 } else { -1 }
         $sy = if ($y1 -lt $y2) { 1 } else { -1 }
         $err = $dx - $dy
-        $x = $x1; $y = $y1
 
+        $x = $x1; $y = $y1
         while ($true) {
           if ($x -ge 0 -and $x -lt $consoleWidth -and $y -ge 0 -and $y -lt $consoleHeight) {
             $key = "$x,$y"
@@ -76,7 +81,7 @@ function Show-Animation {
             if (-not $screen.ContainsKey($key) -or $screen[$key][1] -lt $avgZ) {
               $char = if ($avgZ -gt 5) { "▒" }
               elseif ($avgZ -gt 0) { "▓" }
-              elseif ($avgZ -gt -5) { "▒█" }
+              elseif ($avgZ -gt -5) { "█" }
               else { "░" }
               $screen[$key] = @($char, $avgZ)
             }
@@ -89,30 +94,34 @@ function Show-Animation {
       }
 
       for ($i = 0; $i -lt $rotated.Length; $i++) {
-        $x = $rotated[$i][0]
-        $y = $rotated[$i][1]
-        $z = $rotated[$i][2]
+        $x = $rotated[$i][0]; $y = $rotated[$i][1]; $z = $rotated[$i][2]
         if ($x -ge 0 -and $x -lt $consoleWidth -and $y -ge 0 -and $y -lt $consoleHeight) {
-          $screen["$x,$y"] = @(if ($z -gt 0) { "●" } else { "○" }, $z + 100)
+          $screen["$x,$y"] = @(if ($z -gt 0) { "○" } else { "●" }, $z + 100)
         }
       }
 
-      for ($y = 0; $y -lt $consoleHeight; $y++) {
-        $line = ""
+      $Host.UI.RawUI.CursorPosition = @{X = 0; Y = 0 }
+
+      $buffer = New-Object System.Text.StringBuilder
+
+      for ($y = 1; $y -lt $consoleHeight; $y++) {
         for ($x = 0; $x -lt $consoleWidth; $x++) {
           $key = "$x,$y"
-          $line += if ($screen.ContainsKey($key)) { $screen[$key][0] } else { " " }
+          if ($screen.ContainsKey($key)) {
+            $char = $screen[$key][0]
+          }
+          else {
+            $char = " "
+          }
+          $null = $buffer.Append($char)
         }
-        Write-Host $line -ForegroundColor Yellow
+        $null = $buffer.AppendLine()
       }
 
+      Write-Host $buffer.ToString() -ForegroundColor Magenta
       $angle += 0.08
       Start-Sleep -Milliseconds $FrameDelayMs
     }
-  }
-  catch [System.Management.Automation.PipelineStoppedException] {
-    Clear-Host
-    Write-Host "`n🦅 3D scan complete. Eagle has landed." -ForegroundColor Green
   }
   catch {
     Clear-Host
