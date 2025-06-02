@@ -5,7 +5,7 @@ param (
   [string]$template
 )
 
-$scriptVersion = "2.7.0"
+$scriptVersion = "2.7.1"
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
 $coreDir = Join-Path $scriptDir "core"
@@ -23,10 +23,12 @@ $normalized = switch ($option.ToLower()) {
   "--u" { "update" }
   "--rem" { "uninstall" }
   "--c" { "create" }
+  "--eagle" { "eagle"}
   default { $option.ToLower() }
 }
 
 switch ($normalized) {
+  "eagle" { Show-Animation }
   "spicetify" { Install-Spicetify }
   "vencord" { Install-Vencord }
   "vencord:dev" { Install-Vencord -re }
