@@ -5,7 +5,7 @@ param (
   [string]$template
 )
 
-$scriptVersion = "2.8.0"
+$scriptVersion = "2.8.1"
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
 $coreDir = Join-Path $scriptDir "core"
@@ -25,6 +25,8 @@ $normalized = switch ($option.ToLower()) {
   "rem" { "uninstall" }
   "c" { "create" }
   "eagle" { "eagle" }
+  "minecraft" { "minecraft" }
+  "m" { "minecraft" }
   default { $option.ToLower() }
 }
 
@@ -37,6 +39,7 @@ switch ($normalized) {
   "version" { Show-Version -Version $scriptVersion }
   "update" { Update-Script }
   "create" { Install-Project -name $name -template $template }
+  "minecraft" { Start-MinecraftServer -RamMB 8192 }
   "help" { Show-Help }
   default {
     Write-Host "❌ Unknown command: '$option'. Use 'eagle help' for a list of available commands." -ForegroundColor DarkRed
