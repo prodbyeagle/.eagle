@@ -4,15 +4,14 @@ function Show-Help {
   Write-Host "─────────────────────────────────────────────"
 
   $commands = @(
-    @{ Cmd = "eagle"; Alias = "--eagle"; Desc = "Shows eagle animation" },
-    @{ Cmd = "spicetify"; Alias = "--s"; Desc = "Installs Spicetify" },
-    @{ Cmd = "vencord"; Alias = "--ven"; Desc = "Launches or downloads the Vencord Installer" },
-    @{ Cmd = "vencord:dev"; Alias = "--ven:dev"; Desc = "Launches the Vencord Installer in developer mode" },
-    @{ Cmd = "create"; Alias = "--c"; Desc = "Creates a new project using a template" },
-    @{ Cmd = "update"; Alias = "--u"; Desc = "Checks for updates to eagle and installs if needed" },
-    @{ Cmd = "uninstall"; Alias = "--rem"; Desc = "Removes eagle and cleans up the alias and folder" },
-    @{ Cmd = "version"; Alias = "--v"; Desc = "Displays the current version of the eagle script" },
-    @{ Cmd = "help"; Alias = "--h"; Desc = "Displays this help message" }
+    @{ Cmd = "spicetify"; Alias = "s"; Desc = "Installs Spicetify" },
+    @{ Cmd = "eaglecord"; Alias = "e"; Desc = "Launches or downloads the EagleCord Installer" },
+    @{ Cmd = "eaglecord:dev"; Alias = "e:dev"; Desc = "Launches the EagleCord Installer in developer mode. DONT USE!" },
+    @{ Cmd = "create"; Alias = "c"; Desc = "Creates a new development project using a template" },
+    @{ Cmd = "update"; Alias = "u"; Desc = "Checks for updates to eagle and installs if needed" },
+    @{ Cmd = "uninstall"; Alias = "rem"; Desc = "Removes eagle and cleans up the alias and folder" },
+    @{ Cmd = "version"; Alias = "v"; Desc = "Displays the current version of the eagle script" },
+    @{ Cmd = "help"; Alias = "h"; Desc = "Displays this help message" }
   )
 
   foreach ($c in $commands) {
