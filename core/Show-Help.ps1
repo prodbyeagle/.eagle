@@ -1,6 +1,6 @@
 function Show-Help {
   Write-Host ""
-  Write-Host "🦅 eaglePower — Available Commands" -ForegroundColor Yellow
+  Write-Host "eagle — Available Commands" -ForegroundColor Yellow
   Write-Host "─────────────────────────────────────────────"
 
   $commands = @(
