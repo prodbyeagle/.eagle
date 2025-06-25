@@ -5,7 +5,7 @@ param (
   [string]$template
 )
 
-$scriptVersion = "2.7.3"
+$scriptVersion = "2.8.0"
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
 $coreDir = Join-Path $scriptDir "core"
@@ -16,22 +16,23 @@ Get-ChildItem -Path $coreDir -Filter *.ps1 | ForEach-Object {
 
 $normalized = switch ($option.ToLower()) {
   "--h" { "help" }
-  "--v" { "version" }
-  "--s" { "spicetify" }
-  "--ven" { "vencord" }
-  "--ven:dev" { "vencord:dev" }
-  "--u" { "update" }
-  "--rem" { "uninstall" }
-  "--c" { "create" }
-  "--eagle" { "eagle"}
+  "h" { "help" }
+  "v" { "version" }
+  "s" { "spicetify" }
+  "e" { "eaglecord" }
+  "e:dev" { "eaglecord:dev" }
+  "u" { "update" }
+  "rem" { "uninstall" }
+  "c" { "create" }
+  "eagle" { "eagle" }
   default { $option.ToLower() }
 }
 
 switch ($normalized) {
   "eagle" { Show-Animation }
   "spicetify" { Install-Spicetify }
-  "vencord" { Install-Vencord }
-  "vencord:dev" { Install-Vencord -re }
+  "eaglecord" { Install-Eaglecord }
+  "eaglecord:dev" { Install-Eaglecord -re }
   "uninstall" { Uninstall-Script }
   "version" { Show-Version -Version $scriptVersion }
   "update" { Update-Script }

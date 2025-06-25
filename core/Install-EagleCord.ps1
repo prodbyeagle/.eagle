@@ -1,4 +1,4 @@
-function Install-Vencord {
+function Install-EagleCord {
   param (
     [switch]$re
   )
@@ -18,7 +18,8 @@ function Install-Vencord {
       powershell -c "irm bun.sh/install.ps1 | iex"
 
       $env:PATH = [System.Environment]::GetEnvironmentVariable("PATH", "User")
-    } else {
+    }
+    else {
       Write-Host "✅ Bun is already installed." -ForegroundColor Green
     }
 
