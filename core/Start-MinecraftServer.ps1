@@ -1,7 +1,7 @@
 function Show-ServerSelector {
   $rootPath = "$env:USERPROFILE\Documents\mc-servers"
   if (-not (Test-Path $rootPath)) {
-    Write-Host "❌ No mc-server directory found at $rootPath" -ForegroundColor Red
+    Write-Host "oh. ich habe $rootPath nicht gefunden. stelle sicher das du den ordner erstellt hast, und ein minecraft server vorhanden ist." -ForegroundColor Red
     return $null
   }
 
@@ -10,22 +10,26 @@ function Show-ServerSelector {
   }
 
   if ($servers.Count -eq 0) {
-    Write-Host "❌ No servers with server.jar found in $rootPath" -ForegroundColor Red
+    Write-Host "oh. ich finde keinen server im $rootPath ordner, stelle sicher das du eine 'server.jar' im ordner hast." -ForegroundColor Red
     return $null
   }
 
   $selectedIndex = 0
+
   function Render {
     Clear-Host
-    Write-Host "🎮 Choose a Minecraft server to start:`n" -ForegroundColor Cyan
+    Write-Host "wähle einen minecraft server aus den du starten willst:`n" -ForegroundColor Cyan
     for ($i = 0; $i -lt $servers.Count; $i++) {
+      $prefix = if ($i -eq $selectedIndex) { "> " } else { "  " }
+      $name = $servers[$i].Name
       if ($i -eq $selectedIndex) {
-        Write-Host "> $($servers[$i].Name)" -ForegroundColor Yellow
+        Write-Host "$prefix$name" -ForegroundColor Yellow
       }
       else {
-        Write-Host "  $($servers[$i].Name)"
+        Write-Host "$prefix$name"
       }
     }
+    Write-Host "`nuse ↑ ↓ to scroll. press enter to confirm." -ForegroundColor DarkGray
   }
 
   [Console]::CursorVisible = $false
@@ -65,15 +69,15 @@ function Start-MinecraftServer {
 
   $jarPath = Join-Path $serverPath "server.jar"
   if (-not (Test-Path $jarPath)) {
-    Write-Host "❌ server.jar not found in $serverPath" -ForegroundColor Red
+    Write-Host "oh. ich finde keinen server im $serverPath ordner, stelle sicher das du eine 'server.jar' im ordner hast." -ForegroundColor Red
     return
   }
 
-  Write-Host "🚀 Starting Minecraft server in $serverPath with ${RamMB}MB RAM..." -ForegroundColor Cyan
+  Write-Host "ich starte $serverPath mit ${RamMB}mb ram..." -ForegroundColor Cyan
   Set-Location $serverPath
 
-  $javaCmd = "java -Xmx${RamMB}M -Xms${RamMB}M -jar `"$jarPath`" nogui"
+  $javaCmd = "java -Xmx${RamMB}M -Xms${RamMB}M -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -Daikars.new.flags=true -Dusing.aikars.flags=https://mcutils.com -jar `"$jarPath`" nogui"
   Start-Process -NoNewWindow -Wait -FilePath "cmd.exe" -ArgumentList "/c $javaCmd"
 
-  Write-Host "✅ Server process exited." -ForegroundColor Green
+  Write-Host "server gestoppt." -ForegroundColor Green
 }
