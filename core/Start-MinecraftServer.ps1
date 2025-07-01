@@ -49,6 +49,10 @@ function Show-ServerSelector {
       }
     }
 
+    # Terminalfenstertitel setzen auf Serverordnername
+    $serverName = $servers[$selectedIndex].Name
+    $host.UI.RawUI.WindowTitle = "MC-SERVER: $serverName"
+
     return $servers[$selectedIndex].FullName
   }
   finally {
