@@ -42,7 +42,7 @@ function Get-CoreFiles {
     $coreFiles = @(
         "Install-Project.ps1",
         "Install-Spicetify.ps1",
-        "Install-Vencord.ps1",
+        "Install-EagleCord.ps1",
         "Show-Help.ps1",
         "Show-Version.ps1",
         "Uninstall-Script.ps1",
