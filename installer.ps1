@@ -4,8 +4,8 @@ param (
 
 $scriptPath = "C:\Scripts"
 $corePath = Join-Path $scriptPath "core"
-$eagleUrl = "https://raw.githubusercontent.com/prodbyeagle/eaglePowerShell/main/eagle.ps1"
-$coreBaseUrl = "https://raw.githubusercontent.com/prodbyeagle/eaglePowerShell/main/core"
+$eagleUrl = "https://raw.githubusercontent.com/prodbyeagle/.eagle/main/eagle.ps1"
+$coreBaseUrl = "https://raw.githubusercontent.com/prodbyeagle/.eagle/main/core"
 $eagleLocalSource = "$PSScriptRoot\eagle.ps1"
 $coreLocalSource = "$PSScriptRoot\core"
 $eagleTargetFile = "$scriptPath\eagle.ps1"
@@ -42,7 +42,7 @@ function Get-CoreFiles {
     $coreFiles = @(
         "Install-Project.ps1",
         "Install-Spicetify.ps1",
-        "Install-Vencord.ps1",
+        "Install-EagleCord.ps1",
         "Show-Help.ps1",
         "Show-Version.ps1",
         "Uninstall-Script.ps1",
