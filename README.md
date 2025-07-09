@@ -15,7 +15,7 @@ A lightweight PowerShell utility to manage tools like **Spicetify**, **Vencord**
 Run the following PowerShell command:
 
 ```powershell
-Invoke-WebRequest -UseBasicParsing https://raw.githubusercontent.com/prodbyeagle/eaglePowerShell/main/installer.ps1 | Invoke-Expression
+Invoke-WebRequest -UseBasicParsing https://raw.githubusercontent.com/prodbyeagle/eagle/main/installer.ps1 | Invoke-Expression
 ```
 
 This will:
