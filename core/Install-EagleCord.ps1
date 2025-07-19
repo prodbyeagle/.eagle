@@ -53,11 +53,6 @@ function Install-EagleCord {
       Remove-Item -Recurse -Force "./dist"
     }
 
-    Write-Host "`n📦 Installing dependencies..." -ForegroundColor Yellow
-    bun install
-    Write-Host "✅ Dependency installation complete." -ForegroundColor Green
-
-    # 🔗 Bun link step for packages/discord-types
     $discordTypesPath = Join-Path $vencordCloneDir "packages/discord-types"
     if (Test-Path $discordTypesPath) {
       Write-Host "🔗 Linking @vencord/discord-types..." -ForegroundColor Cyan
@@ -69,6 +64,9 @@ function Install-EagleCord {
       Write-Host "⚠️ Could not find packages/discord-types to link." -ForegroundColor Yellow
     }
 
+    Write-Host "`n📦 Installing dependencies..." -ForegroundColor Yellow
+    bun install
+    Write-Host "✅ Dependency installation complete." -ForegroundColor Green
   }
   catch {
     Write-Host "❌ Setup failed: $_" -ForegroundColor Red
