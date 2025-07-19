@@ -5,7 +5,7 @@ param (
   [string]$template
 )
 
-$scriptVersion = "2.8.4"
+$scriptVersion = "2.8.1"
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
 $coreDir = Join-Path $scriptDir "core"
@@ -15,6 +15,7 @@ Get-ChildItem -Path $coreDir -Filter *.ps1 | ForEach-Object {
 }
 
 $normalized = switch ($option.ToLower()) {
+  "--h" { "help" }
   "h" { "help" }
   "v" { "version" }
   "s" { "spicetify" }
@@ -23,17 +24,22 @@ $normalized = switch ($option.ToLower()) {
   "u" { "update" }
   "rem" { "uninstall" }
   "c" { "create" }
+  "eagle" { "eagle" }
+  "minecraft" { "minecraft" }
+  "m" { "minecraft" }
   default { $option.ToLower() }
 }
 
 switch ($normalized) {
+  "eagle" { Show-Animation }
   "spicetify" { Install-Spicetify }
-  "eaglecord" { Install-EagleCord }
-  "eaglecord:dev" { Install-EagleCord -re }
+  "eaglecord" { Install-Eaglecord }
+  "eaglecord:dev" { Install-Eaglecord -re }
   "uninstall" { Uninstall-Script }
   "version" { Show-Version -Version $scriptVersion }
   "update" { Update-Script }
   "create" { Install-Project -name $name -template $template }
+  "minecraft" { Start-MinecraftServer -RamMB 8192 }
   "help" { Show-Help }
   default {
     Write-Host "❌ Unknown command: '$option'. Use 'eagle help' for a list of available commands." -ForegroundColor DarkRed
