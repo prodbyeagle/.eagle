@@ -1,4 +1,4 @@
-function Install-Vencord {
+function Install-EagleCord {
   param (
     [switch]$re
   )
@@ -18,7 +18,8 @@ function Install-Vencord {
       powershell -c "irm bun.sh/install.ps1 | iex"
 
       $env:PATH = [System.Environment]::GetEnvironmentVariable("PATH", "User")
-    } else {
+    }
+    else {
       Write-Host "✅ Bun is already installed." -ForegroundColor Green
     }
 
@@ -55,6 +56,19 @@ function Install-Vencord {
     Write-Host "`n📦 Installing dependencies..." -ForegroundColor Yellow
     bun install
     Write-Host "✅ Dependency installation complete." -ForegroundColor Green
+
+    # 🔗 Bun link step for packages/discord-types
+    $discordTypesPath = Join-Path $vencordCloneDir "packages/discord-types"
+    if (Test-Path $discordTypesPath) {
+      Write-Host "🔗 Linking @vencord/discord-types..." -ForegroundColor Cyan
+      Push-Location $discordTypesPath
+      bun link
+      Pop-Location
+    }
+    else {
+      Write-Host "⚠️ Could not find packages/discord-types to link." -ForegroundColor Yellow
+    }
+
   }
   catch {
     Write-Host "❌ Setup failed: $_" -ForegroundColor Red
