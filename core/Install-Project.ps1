@@ -71,8 +71,8 @@ function Install-Project {
   }
 
   $repoUrl = switch ($template.ToLower()) {
-    "discord" { "https://github.com/prodbyeagle/discord-template.git" }
-    "next" { "https://github.com/prodbyeagle/next-template.git" }
+    "discord" { "https://github.com/meowlounge/discord-template.git" }
+    "next" { "https://github.com/meowlounge/next-template.git" }
   }
 
   Write-Host "📁 Creating new '$template' project: $name" -ForegroundColor Cyan
