@@ -56,8 +56,8 @@ function Install-Project {
   }
 
   $targetRoot = switch ($template.ToLower()) {
-    "discord" { "D:\VSCode\2025\Discord" }
-    "next" { "D:\VSCode\2025\Frontend" }
+    "discord" { "D:\Development\.25\Discord" }
+    "next" { "D:\Development\.25\Frontend" }
     default {
       Write-Host "❌ Invalid template: '$template'. Allowed: discord, next" -ForegroundColor Red
       return
