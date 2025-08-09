@@ -1,5 +1,5 @@
 function Show-TemplateSelector {
-  $options = @("discord", "next")
+  $options = @("discord", "next", "typescript")
   $selectedIndex = 0
 
   function Render {
@@ -56,8 +56,9 @@ function Install-Project {
   }
 
   $targetRoot = switch ($template.ToLower()) {
-    "discord" { "D:\Development\.25\Discord" }
-    "next" { "D:\Development\.25\Frontend" }
+    "discord" { "D:\Development\.25\discord" }
+    "next" { "D:\Development\.25\frontend" }
+    "typescript" { "D:\Development\.25\typescript" }
     default {
       Write-Host "❌ Invalid template: '$template'. Allowed: discord, next" -ForegroundColor Red
       return
@@ -73,6 +74,7 @@ function Install-Project {
   $repoUrl = switch ($template.ToLower()) {
     "discord" { "https://github.com/meowlounge/discord-template.git" }
     "next" { "https://github.com/meowlounge/next-template.git" }
+    "typescript" { "https://github.com/meowlounge/typescript-template.git" }
   }
 
   Write-Host "📁 Creating new '$template' project: $name" -ForegroundColor Cyan
