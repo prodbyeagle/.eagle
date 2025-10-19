@@ -1,57 +1,55 @@
-A lightweight PowerShell utility to manage tools like **Spicetify**, **Vencord**, and automate basic script handling such as install, update, and uninstall.
+A lightweight toolkit to manage the original PowerShell utilities for **Spicetify**, **Vencord**, Minecraft servers, and more—now rewritten in TypeScript with Bun.
 
 ## 🚀 Features
 
--   Install **Spicetify** easily
--   Download & run **Vencord Installer**
--   Automatic script update checking
--   Clean uninstall with profile and path cleanup
--   Alias setup for easy access via `eagle` command
+-   Install **Spicetify** using the upstream installer
+-   Download, update, and inject the **EagleCord** fork of Vencord
+-   Bootstrap projects from Discord or Next.js templates
+-   Automate updates for the legacy PowerShell install
+-   Launch local Minecraft servers with tuned JVM flags
+-   Uninstall the old PowerShell distribution cleanly
 
 ---
 
-## 📦 Installation
+## ▶️ Running the CLI
 
-Run the following PowerShell command:
-
-```powershell
-Invoke-WebRequest -UseBasicParsing https://raw.githubusercontent.com/prodbyeagle/eagle/main/installer.ps1 | Invoke-Expression
+```bash
+bun src/cli.ts <command>
 ```
 
-This will:
+Global flags:
 
--   Download the latest `eagle.ps1` to `C:\Scripts`
--   Add a `eagle` alias to your PowerShell profile
--   Add `C:\Scripts` to your `PATH` (if not already)
--   Enable access via `eagle` from any terminal
+-   `--silent` – suppress log output
+-   `--debug` – enable verbose debug logging
 
 ---
 
-## 🛠 Usage
+## 🛠 Commands
 
-```powershell
-eagle [command]
-```
+| Command        | Aliases                 | Description                                                |
+| -------------- | ----------------------- | ---------------------------------------------------------- |
+| `help`         | `--h`, `h`              | Display command information. Use `help <command>` to drill down. |
+| `spicetify`    | `s`                     | Run the official Spicetify installer via PowerShell.       |
+| `eaglecord`    | `e`, `eaglecord:dev`, `e:dev` | Clone/update the EagleCord fork and inject it. `:dev` forces a reinstall. |
+| `create`       | `c`                     | Scaffold a project from the Discord or Next.js templates.  |
+| `update`       | `u`                     | Fetch the latest PowerShell release and refresh the install. |
+| `uninstall`    | `rem`                   | Remove the legacy PowerShell scripts and cleanup aliases.  |
+| `version`      | `v`                     | Show the current CLI version and repository link.          |
+| `minecraft`    | `m`                     | Start a Minecraft server from `~/Documents/mc-servers`.    |
+| `eagle`        | —                       | Playful animation inspired by the original script.         |
 
-### Available Commands:
+---
 
-```powershell
-eagle help or eagle --h
-eagle status
-```
+## 📦 Legacy PowerShell Installers
 
-`status` shows the current progress of the TypeScript rewrite so contributors know what still needs attention.
+The original PowerShell scripts still live in [`powershell/`](powershell/). Use the `update` and `uninstall` commands above to manage that installation from the new TypeScript CLI.
 
 ---
 
 ## 🧼 Uninstall
 
-```powershell
-eagle uninstall or eagle --rem
+```bash
+bun src/cli.ts uninstall
 ```
 
-This will:
-
--   Delete `eagle.ps1`
--   Remove the alias from your PowerShell profile
--   Clean up the `C:\Scripts` folder (if not empty)
+This removes `C:\Scripts\eagle.ps1`, the associated `core` directory, the optional `eagle` folder, and clears the `Set-Alias eagle` entry from your PowerShell profile.

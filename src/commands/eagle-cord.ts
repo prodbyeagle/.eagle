@@ -1,68 +1,89 @@
 import { $ } from 'bun';
-import { existsSync } from 'fs';
+import { existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
-import { logger } from '../lib/logger';
+import type { CommandDefinition } from './types';
 
-export async function eaglecordCommand(args: string[]) {
-	const re = args.includes('--re') || args.includes('-r');
+const REPO_URL = 'https://github.com/prodbyeagle/cord';
+const REPO_NAME = 'Vencord';
 
-	const repoUrl = 'https://github.com/prodbyeagle/cord';
-	const repoName = 'Vencord';
-	const vencordTempDir = join(process.env.APPDATA ?? '', 'EagleCord');
-	const vencordCloneDir = join(vencordTempDir, repoName);
+export const eaglecordCommand: CommandDefinition = {
+        name: 'eaglecord',
+        aliases: ['e', 'eaglecord:dev', 'e:dev'],
+        description: 'Downloads and injects the EagleCord fork of Vencord.',
+        usage: 'eaglecord [--re]',
+        run: async (args, ctx) => {
+                const { logger, invokedAs } = ctx;
+                const reinstallFlag =
+                        args.includes('--re') ||
+                        args.includes('-r') ||
+                        invokedAs.toLowerCase().endsWith(':dev');
 
-	try {
-		logger.info('Checking for Bun runtime...');
-		const version = await $`bun --version`.quiet().text();
-		logger.success(`Bun is installed (v${version.trim()})`);
-	} catch {
-		logger.warn('Bun not found. Installing Bun...');
-		await $`powershell -c "irm bun.sh/install.ps1 | iex"`;
-	}
+                const repoDir = join(process.env.APPDATA ?? '', 'EagleCord', REPO_NAME);
 
-	if (re && existsSync(vencordCloneDir)) {
-		logger.warn('Removing existing repo directory for reinstall...');
-		await $`rm -rf ${vencordCloneDir}`;
-	}
+                try {
+                        logger.info('Checking for Bun runtime...');
+                        const version = await $`bun --version`.quiet().text();
+                        logger.success(`Bun is installed (v${version.trim()})`);
+                } catch {
+                        logger.warn('Bun not found. Installing Bun...');
+                        try {
+                                await $`powershell -c "irm bun.sh/install.ps1 | iex"`;
+                        } catch (error) {
+                                logger.error('Failed to install Bun automatically.', error);
+                                return;
+                        }
+                }
 
-	if (existsSync(vencordCloneDir)) {
-		process.chdir(vencordCloneDir);
-		const localHash = await $`git rev-parse HEAD`.text();
-		const remoteHashRaw = await $`git ls-remote ${repoUrl} HEAD`.text();
-		const remoteHash = remoteHashRaw.split('\t')[0];
+                if (reinstallFlag && existsSync(repoDir)) {
+                        logger.warn('Removing existing repo directory for reinstall...');
+                        await $`rm -rf ${repoDir}`;
+                }
 
-		if (localHash.trim() === remoteHash?.trim()) {
-			logger.info(`Repo is up-to-date (commit: ${localHash.trim()})`);
-		} else {
-			logger.warn('Updating to latest commit...');
-			await $`git fetch origin`;
-			await $`git reset --hard origin/main`;
-		}
-	} else {
-		logger.warn('Cloning fresh copy of repo...');
-		await $`git clone ${repoUrl} ${vencordCloneDir}`;
-		process.chdir(vencordCloneDir);
-	}
+                if (existsSync(repoDir)) {
+                        process.chdir(repoDir);
+                        const localHash = await $`git rev-parse HEAD`.text();
+                        const remoteHashRaw = await $`git ls-remote ${REPO_URL} HEAD`.text();
+                        const remoteHash = remoteHashRaw.split('\t')[0];
 
-	if (existsSync('./dist')) {
-		logger.info('Cleaning dist folder...');
-		await $`rm -rf ./dist`;
-	}
+                        if (localHash.trim() === remoteHash?.trim()) {
+                                logger.info(`Repo is up-to-date (commit: ${localHash.trim()})`);
+                        } else {
+                                logger.warn('Updating to latest commit...');
+                                await $`git fetch origin`;
+                                await $`git reset --hard origin/main`;
+                        }
+                } else {
+                        const targetDir = join(process.env.APPDATA ?? '', 'EagleCord');
+                        if (!existsSync(targetDir)) {
+                                mkdirSync(targetDir, { recursive: true });
+                        }
 
-	logger.warn('Installing dependencies...');
-	await $`bun install`;
-	logger.success('Dependency installation complete.');
+                        logger.warn('Cloning fresh copy of repo...');
+                        await $`git clone ${REPO_URL} ${repoDir}`;
+                        process.chdir(repoDir);
+                }
 
-	try {
-		logger.warn('Injecting EagleCord...');
-		await $`bun run build`;
-		await $`bun inject`;
-		logger.success('EagleCord injected successfully.');
-	} catch (err) {
-		logger.error('Failed during inject step', err);
-		return;
-	}
+                if (existsSync('./dist')) {
+                        logger.info('Cleaning dist folder...');
+                        await $`rm -rf ./dist`;
+                }
 
-	process.chdir(process.env.HOME ?? process.cwd());
-	logger.info('🎉 Vencord installation complete.');
-}
+                logger.warn('Installing dependencies...');
+                await $`bun install`;
+                logger.success('Dependency installation complete.');
+
+                try {
+                        logger.warn('Injecting EagleCord...');
+                        await $`bun run build`;
+                        await $`bun inject`;
+                        logger.success('EagleCord injected successfully.');
+                } catch (error) {
+                        logger.error('Failed during inject step.', error);
+                        return;
+                } finally {
+                        process.chdir(process.env.HOME ?? process.cwd());
+                }
+
+                logger.info('🎉 Vencord installation complete.');
+        },
+};

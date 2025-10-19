@@ -1,6 +1,7 @@
 {
   "name": "eagle",
-  "module": "index.ts",
+  "version": "2.8.1",
+  "module": "src/cli.ts",
   "type": "module",
   "private": true,
   "devDependencies": {

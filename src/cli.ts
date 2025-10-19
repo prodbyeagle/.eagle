@@ -1,37 +1,46 @@
 #!/usr/bin/env bun
-import { argv, exit } from 'process';
-import { commands } from './commands';
+import { commandList, resolveCommand } from './commands';
 import { logger, setLogLevel } from './lib/logger';
 
-// Optional: parse global flags like --verbose
-const [, , rawCommand, ...restArgs] = argv;
+const argsList = [...process.argv];
+const rawCommand = argsList[2];
+const restArgs = argsList.slice(3);
 
-const globalFlags = restArgs.filter((arg) => arg.startsWith('--'));
-const args = restArgs.filter((arg) => !arg.startsWith('--'));
+const recognizedGlobals = new Set(['--silent', '--debug']);
+const globalFlags = restArgs.filter((arg: string) => recognizedGlobals.has(arg));
+const args = restArgs.filter((arg: string) => !recognizedGlobals.has(arg));
 
 if (globalFlags.includes('--silent')) setLogLevel('silent');
 else if (globalFlags.includes('--debug')) setLogLevel('debug');
 else setLogLevel('info');
 
-if (!rawCommand || rawCommand === 'help') {
-	logger.info('🦅 Eagle CLI\nAvailable commands:\n');
-	for (const cmd of Object.keys(commands)) {
-		logger.info(`  • ${cmd}`);
-	}
-	exit(0);
+if (!rawCommand) {
+        const helpCommand = commandList.find((command) => command.name === 'help');
+        if (helpCommand) {
+                await helpCommand.run([], { logger, commandList, invokedAs: 'help' });
+        }
+        process.exit(0);
 }
 
-const command = commands[rawCommand];
-if (!command) {
-	logger.error(
-		`Unknown command '${rawCommand}'. Run 'eagle help' for options.`
-	);
-	exit(1);
+const resolution = resolveCommand(rawCommand);
+if (!resolution) {
+        logger.error(`Unknown command '${rawCommand}'. Run 'eagle help' for options.`);
+        process.exit(1);
+}
+
+const { command, invokedAs } = resolution;
+let commandArgs = args;
+if (command.name === 'eaglecord' && invokedAs.toLowerCase().includes(':dev')) {
+        commandArgs = [...commandArgs, '--re'];
 }
 
 try {
-	await command(args);
+        await command.run(commandArgs, {
+                logger,
+                commandList,
+                invokedAs,
+        });
 } catch (err) {
-	logger.error('Command failed.', err);
-	exit(1);
+        logger.error('Command failed.', err);
+        process.exit(1);
 }
