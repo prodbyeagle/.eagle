@@ -37,7 +37,10 @@ eagle [command]
 
 ```powershell
 eagle help or eagle --h
-```                                                                    
+eagle status
+```
+
+`status` shows the current progress of the TypeScript rewrite so contributors know what still needs attention.
 
 ---
 
