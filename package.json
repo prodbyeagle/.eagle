@@ -2,6 +2,9 @@
   "name": "eagle",
   "version": "2.8.1",
   "module": "src/cli.ts",
+  "bin": {
+    "eagle": "./bin/eagle.ts"
+  },
   "type": "module",
   "private": true,
   "devDependencies": {

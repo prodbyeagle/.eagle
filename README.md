@@ -13,8 +13,17 @@ A lightweight toolkit to manage the original PowerShell utilities for **Spicetif
 
 ## ▶️ Running the CLI
 
+Run the CLI directly with Bun:
+
 ```bash
 bun src/cli.ts <command>
+```
+
+Or link it once and call `eagle` from any directory:
+
+```bash
+bun link
+eagle <command>
 ```
 
 Global flags:
@@ -49,7 +58,7 @@ The original PowerShell scripts still live in [`powershell/`](powershell/). Use 
 ## 🧼 Uninstall
 
 ```bash
-bun src/cli.ts uninstall
+eagle uninstall
 ```
 
 This removes `C:\Scripts\eagle.ps1`, the associated `core` directory, the optional `eagle` folder, and clears the `Set-Alias eagle` entry from your PowerShell profile.
