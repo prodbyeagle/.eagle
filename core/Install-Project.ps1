@@ -55,12 +55,16 @@ function Install-Project {
     $template = Show-TemplateSelector
   }
 
+  # ✅ Automatically use current year (two digits, e.g. 26 for 2026)
+  $year = (Get-Date).ToString('yy')
+  $baseRoot = "D:\Development\.$year"
+
   $targetRoot = switch ($template.ToLower()) {
-    "discord" { "D:\Development\.25\discord" }
-    "next" { "D:\Development\.25\frontend" }
-    "typescript" { "D:\Development\.25\typescript" }
+    "discord"    { Join-Path $baseRoot "discord" }
+    "next"       { Join-Path $baseRoot "frontend" }
+    "typescript" { Join-Path $baseRoot "typescript" }
     default {
-      Write-Host "❌ Invalid template: '$template'. Allowed: discord, next" -ForegroundColor Red
+      Write-Host "❌ Invalid template: '$template'. Allowed: discord, next, typescript" -ForegroundColor Red
       return
     }
   }
@@ -71,9 +75,14 @@ function Install-Project {
     return
   }
 
+  # (Optional) Ensure target root exists
+  if (-not (Test-Path $targetRoot)) {
+    New-Item -ItemType Directory -Path $targetRoot -Force | Out-Null
+  }
+
   $repoUrl = switch ($template.ToLower()) {
-    "discord" { "https://github.com/meowlounge/discord-template.git" }
-    "next" { "https://github.com/meowlounge/next-template.git" }
+    "discord"    { "https://github.com/meowlounge/discord-template.git" }
+    "next"       { "https://github.com/meowlounge/next-template.git" }
     "typescript" { "https://github.com/meowlounge/typescript-template.git" }
   }
 
