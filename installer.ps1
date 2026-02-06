@@ -39,6 +39,33 @@ function Ensure-Directory {
 	}
 }
 
+function Remove-LegacyInstall {
+	param (
+		[Parameter(Mandatory = $true)]
+		[string]$ScriptsRoot
+	)
+
+	$legacyExeDir = Join-Path $ScriptsRoot 'eagle'
+	$legacyPs1 = Join-Path $ScriptsRoot 'eagle.ps1'
+	$legacyCore = Join-Path $ScriptsRoot 'core'
+
+	if (Test-Path $legacyExeDir) {
+		Log "Removing legacy folder: $legacyExeDir" 'Yellow'
+		Remove-Item -Recurse -Force $legacyExeDir
+	}
+
+	if (Test-Path $legacyPs1) {
+		Log "Removing legacy script: $legacyPs1" 'Yellow'
+		Remove-Item -Force $legacyPs1
+	}
+
+	$legacyCoreMarker = Join-Path $legacyCore 'Show-Help.ps1'
+	if (Test-Path $legacyCoreMarker) {
+		Log "Removing legacy core folder: $legacyCore" 'Yellow'
+		Remove-Item -Recurse -Force $legacyCore
+	}
+}
+
 function Invoke-DownloadFile {
 	param (
 		[Parameter(Mandatory = $true)]
@@ -124,6 +151,7 @@ function Install-FromSourceZip {
 Log 'Starting eagle install...' 'White'
 
 Ensure-Directory -Path $scriptsRoot
+Remove-LegacyInstall -ScriptsRoot $scriptsRoot
 
 if ($Dev) {
 	Log 'Dev mode: building from local repo...' 'Yellow'
@@ -205,8 +233,33 @@ else {
 	Log 'PATH already contains C:\Scripts.' 'DarkGray'
 }
 
+# Make it work immediately in the current PowerShell session too.
+if ($env:Path -notlike "*$scriptsRoot*") {
+	$env:Path = "$env:Path;$scriptsRoot"
+}
+
+Set-Alias -Name eagle -Value $installExe -Scope Global -Force
+
 Remove-Item -Path $tempZipPath -Force -ErrorAction SilentlyContinue
 Remove-Item -Path $tempExtractPath -Recurse -Force `
 	-ErrorAction SilentlyContinue
 
-Log 'Done. Restart PowerShell to use eagle.' 'Cyan'
+try {
+	$resolved = Get-Command eagle -ErrorAction Stop
+
+	$resolvedValue = $resolved.Source
+	if ($resolved.CommandType -eq 'Alias') {
+		$resolvedValue = $resolved.Definition
+	}
+	if (-not $resolvedValue -and $resolved.Path) {
+		$resolvedValue = $resolved.Path
+	}
+
+	Log "eagle resolves to: $($resolved.CommandType) $resolvedValue" `
+		'DarkGray'
+}
+catch {
+	Log 'Could not resolve `eagle` in this session.' 'Yellow'
+}
+
+Log 'Done. Try: eagle version' 'Cyan'
