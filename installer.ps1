@@ -168,12 +168,28 @@ if (-not (Test-Path $PROFILE)) {
 }
 
 $aliasLine = "Set-Alias eagle `"$installExe`""
-if (-not (Select-String -Path $PROFILE -Pattern ([regex]::Escape($aliasLine)) -Quiet)) {
-	Add-Content -Path $PROFILE -Value "`n$aliasLine"
-	Log 'Alias added: eagle' 'Green'
+$profileContent = Get-Content -Path $PROFILE -ErrorAction SilentlyContinue
+if (-not $profileContent) {
+	$profileContent = @()
+}
+
+$filtered = $profileContent | Where-Object {
+	$_ -notmatch '^\s*Set-Alias\s+eagle\s+'
+}
+
+$needsWrite = $true
+foreach ($line in $filtered) {
+	if ($line -eq $aliasLine) {
+		$needsWrite = $false
+	}
+}
+
+if ($needsWrite) {
+	Set-Content -Path $PROFILE -Value @($filtered + '' + $aliasLine)
+	Log 'Alias updated: eagle' 'Green'
 }
 else {
-	Log 'Alias already present, skipping.' 'DarkGray'
+	Log 'Alias already correct, skipping.' 'DarkGray'
 }
 
 $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
@@ -194,4 +210,3 @@ Remove-Item -Path $tempExtractPath -Recurse -Force `
 	-ErrorAction SilentlyContinue
 
 Log 'Done. Restart PowerShell to use eagle.' 'Cyan'
-
