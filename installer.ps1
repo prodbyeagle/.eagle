@@ -1,105 +1,130 @@
 param (
-    [switch]$Dev
+	[switch]$Dev
 )
 
-$scriptPath = "C:\Scripts"
-$corePath = Join-Path $scriptPath "core"
-$eagleUrl = "https://raw.githubusercontent.com/prodbyeagle/.eagle/main/eagle.ps1"
-$coreBaseUrl = "https://raw.githubusercontent.com/prodbyeagle/.eagle/main/core"
-$eagleLocalSource = "$PSScriptRoot\eagle.ps1"
-$coreLocalSource = "$PSScriptRoot\core"
-$eagleTargetFile = "$scriptPath\eagle.ps1"
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
+
+$scriptsRoot = 'C:\\Scripts'
+$installDir = Join-Path $scriptsRoot 'eagle'
+$zipUrl = `
+	'https://github.com/prodbyeagle/eaglePowerShell/archive/refs/heads/main.zip'
+
+$tempZipPath = Join-Path $env:TEMP 'eagle_install.zip'
+$tempExtractPath = Join-Path $env:TEMP 'eagle_install'
 
 function Log {
-    param (
-        [string]$Tag = "INFO",
-        [string]$Message,
-        [ConsoleColor]$Color = "Gray"
-    )
-    Write-Host "[$Tag] $Message" -ForegroundColor $Color
+	param (
+		[Parameter(Mandatory = $true)]
+		[string]$Message,
+
+		[ConsoleColor]$Color = 'Gray'
+	)
+
+	Write-Host $Message -ForegroundColor $Color
 }
 
-function New-Directory {
-    param([string]$Path)
-    if (-not (Test-Path $Path)) {
-        New-Item -ItemType Directory -Path $Path -Force | Out-Null
-        Log "INFO" "Created folder: $Path" "DarkGray"
-    }
+function Ensure-Directory {
+	param (
+		[Parameter(Mandatory = $true)]
+		[string]$Path
+	)
+
+	if (-not (Test-Path $Path)) {
+		New-Item -ItemType Directory -Path $Path -Force | Out-Null
+	}
 }
 
-function Invoke-DownloadFile {
-    param([string]$Uri, [string]$OutFile)
-    try {
-        Invoke-WebRequest -Uri $Uri -OutFile $OutFile -UseBasicParsing -ErrorAction Stop
-    }
-    catch {
-        Log "ERROR" "✖ Couldn't download file from $Uri. Please check your internet connection and try again." "Red"
-        exit 1
-    }
+function Copy-InstallTree {
+	param (
+		[Parameter(Mandatory = $true)]
+		[string]$FromDir,
+
+		[Parameter(Mandatory = $true)]
+		[string]$ToDir
+	)
+
+	$items = @('eagle.ps1', 'version.txt', 'commands', 'lib')
+	foreach ($item in $items) {
+		$src = Join-Path $FromDir $item
+		$dst = Join-Path $ToDir $item
+
+		if (-not (Test-Path $src)) {
+			continue
+		}
+
+		if (Test-Path $dst) {
+			Remove-Item -Recurse -Force $dst
+		}
+
+		Copy-Item -Path $src -Destination $dst -Recurse -Force
+	}
 }
 
-function Get-CoreFiles {
-    $coreFiles = @(
-        "Install-Project.ps1",
-        "Install-Spicetify.ps1",
-        "Install-EagleCord.ps1",
-        "Show-Help.ps1",
-        "Show-Version.ps1",
-        "Uninstall-Script.ps1",
-        "Update-Script.ps1"
-    )
-    foreach ($file in $coreFiles) {
-        $remote = "$coreBaseUrl/$file"
-        $local = Join-Path $corePath $file
-        Log "STEP" "Downloading helper file: $file" "Cyan"
-        Invoke-DownloadFile -Uri $remote -OutFile $local
-    }
-}
+Log 'Starting eagle install...' 'White'
 
-# Start
-Log "INFO" "Starting Eagle setup..." "White"
-
-New-Directory -Path $scriptPath
-New-Directory -Path $corePath
+Ensure-Directory -Path $scriptsRoot
+Ensure-Directory -Path $installDir
 
 if ($Dev) {
-    Log "DEV" "Installing from local developer files..." "Yellow"
-    Copy-Item -Path $eagleLocalSource -Destination $eagleTargetFile -Force -ErrorAction Stop
-    Copy-Item -Path "$coreLocalSource\*" -Destination $corePath -Recurse -Force
+	Log 'Installing from local files (Dev mode)...' 'Yellow'
+	Copy-InstallTree -FromDir $PSScriptRoot -ToDir $installDir
 }
 else {
-    Log "STEP" "Downloading the main Eagle script..." "Cyan"
-    Invoke-DownloadFile -Uri $eagleUrl -OutFile $eagleTargetFile
+	Log 'Downloading release zip...' 'Cyan'
 
-    Log "STEP" "Downloading required helper files..." "Cyan"
-    Get-CoreFiles
+	if (Test-Path $tempZipPath) {
+		Remove-Item -Force $tempZipPath
+	}
+	if (Test-Path $tempExtractPath) {
+		Remove-Item -Recurse -Force $tempExtractPath
+	}
+
+	Invoke-WebRequest -Uri $zipUrl -OutFile $tempZipPath `
+		-UseBasicParsing -ErrorAction Stop
+
+	Expand-Archive -Path $tempZipPath -DestinationPath $tempExtractPath -Force
+
+	$root = Get-ChildItem -Path $tempExtractPath -Directory | Select-Object -First 1
+	if (-not $root) {
+		throw 'Zip did not contain a root directory.'
+	}
+
+	Copy-InstallTree -FromDir $root.FullName -ToDir $installDir
 }
 
-Log "SUCCESS" "✔ Eagle has been installed in C:\Scripts" "Green"
+Log "Installed to: $installDir" 'Green'
 
-# Alias setup
 if (-not (Test-Path $PROFILE)) {
-    New-Item -ItemType File -Path $PROFILE -Force | Out-Null
+	New-Item -ItemType File -Path $PROFILE -Force | Out-Null
 }
 
-$aliasLine = "Set-Alias eagle `"$eagleTargetFile`""
+$aliasLine = "Set-Alias eagle `"$installDir\\eagle.ps1`""
 if (-not (Select-String -Path $PROFILE -Pattern ([regex]::Escape($aliasLine)) -Quiet)) {
-    Add-Content -Path $PROFILE -Value "`n$aliasLine"
-    Log "SUCCESS" "✔ You can now run 'eagle' from PowerShell." "Green"
+	Add-Content -Path $PROFILE -Value "`n$aliasLine"
+	Log 'Alias added: eagle' 'Green'
 }
 else {
-    Log "INFO" "Seems like 'eagle' was already installed, skipping step." "Gray"
+	Log 'Alias already present, skipping.' 'DarkGray'
 }
 
-# PATH setup
-$userPath = [Environment]::GetEnvironmentVariable("Path", "User")
-if ($userPath -notlike "*$scriptPath*") {
-    [Environment]::SetEnvironmentVariable("Path", "$userPath;$scriptPath", "User")
-    Log "SUCCESS" "✔ Added Eagle folder to your PATH environment variable." "Green"
+$userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
+if ($userPath -notlike "*$scriptsRoot*") {
+	[Environment]::SetEnvironmentVariable(
+		'Path',
+		"$userPath;$scriptsRoot",
+		'User'
+	)
+	Log "Added to PATH: $scriptsRoot" 'Green'
 }
 else {
-    Log "INFO" "The Eagle folder is already in your system PATH." "Yellow"
+	Log 'PATH already contains C:\\Scripts.' 'DarkGray'
 }
 
-# Done
-Log "DONE" "`n✔ All done! Please restart PowerShell to use Eagle." "Cyan"
+if (-not $Dev) {
+	Remove-Item -Path $tempZipPath -Force -ErrorAction SilentlyContinue
+	Remove-Item -Path $tempExtractPath -Recurse -Force `
+		-ErrorAction SilentlyContinue
+}
+
+Log 'Done. Restart PowerShell to use eagle.' 'Cyan'

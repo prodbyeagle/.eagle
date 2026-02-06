@@ -1,54 +1,29 @@
-A lightweight PowerShell utility to manage tools like **Spicetify**, **Vencord**, and automate basic script handling such as install, update, and uninstall.
+A lightweight PowerShell CLI to automate a few personal workflows
+(Spicetify, EagleCord, project templates, etc.).
 
-## 🚀 Features
+## Install
 
--   Install **Spicetify** easily
--   Download & run **Vencord Installer**
--   Automatic script update checking
--   Clean uninstall with profile and path cleanup
--   Alias setup for easy access via `eagle` command
-
----
-
-## 📦 Installation
-
-Run the following PowerShell command:
+Run in PowerShell:
 
 ```powershell
-Invoke-WebRequest -UseBasicParsing https://raw.githubusercontent.com/prodbyeagle/eagle/main/installer.ps1 | Invoke-Expression
+Invoke-WebRequest -UseBasicParsing `
+	https://raw.githubusercontent.com/prodbyeagle/eaglePowerShell/main/installer.ps1 |
+	Invoke-Expression
 ```
 
-This will:
+This installs to `C:\Scripts\eagle` and sets a PowerShell alias `eagle`.
 
--   Download the latest `eagle.ps1` to `C:\Scripts`
--   Add a `eagle` alias to your PowerShell profile
--   Add `C:\Scripts` to your `PATH` (if not already)
--   Enable access via `eagle` from any terminal
-
----
-
-## 🛠 Usage
+## Usage
 
 ```powershell
-eagle [command]
+eagle help
+eagle <command> [args]
 ```
 
-### Available Commands:
+## Dev Install
+
+From the repo root:
 
 ```powershell
-eagle help or eagle --h
-```                                                                    
-
----
-
-## 🧼 Uninstall
-
-```powershell
-eagle uninstall or eagle --rem
+.\installer.ps1 -Dev
 ```
-
-This will:
-
--   Delete `eagle.ps1`
--   Remove the alias from your PowerShell profile
--   Clean up the `C:\Scripts` folder (if not empty)
