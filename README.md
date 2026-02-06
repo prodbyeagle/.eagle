@@ -1,9 +1,7 @@
-A lightweight PowerShell CLI to automate a few personal workflows
-(Spicetify, EagleCord, project templates, etc.).
+A lightweight native CLI (Rust) to automate a few personal workflows
+(Spicetify, EagleCord, project templates, Minecraft server launcher, etc.).
 
-## Install
-
-Run in PowerShell:
+## Install (Windows)
 
 ```powershell
 Invoke-WebRequest -UseBasicParsing `
@@ -11,7 +9,7 @@ Invoke-WebRequest -UseBasicParsing `
 	Invoke-Expression
 ```
 
-This installs to `C:\Scripts\eagle` and sets a PowerShell alias `eagle`.
+Installs `eagle.exe` to `C:\Scripts` and sets a PowerShell alias `eagle`.
 
 ## Usage
 
@@ -20,10 +18,9 @@ eagle help
 eagle <command> [args]
 ```
 
-## Dev Install
-
-From the repo root:
+## Dev
 
 ```powershell
-.\installer.ps1 -Dev
+cd .\eagle-cli
+cargo run -- help
 ```

@@ -5,9 +5,13 @@ param (
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-$scriptsRoot = 'C:\\Scripts'
-$installDir = Join-Path $scriptsRoot 'eagle'
-$zipUrl = `
+$scriptsRoot = 'C:\Scripts'
+$installExe = Join-Path $scriptsRoot 'eagle.exe'
+
+$releaseExeUrl = `
+	'https://github.com/prodbyeagle/eaglePowerShell/releases/latest/download/eagle.exe'
+
+$sourceZipUrl = `
 	'https://github.com/prodbyeagle/eaglePowerShell/archive/refs/heads/main.zip'
 
 $tempZipPath = Join-Path $env:TEMP 'eagle_install.zip'
@@ -35,43 +39,49 @@ function Ensure-Directory {
 	}
 }
 
-function Copy-InstallTree {
+function Invoke-DownloadFile {
 	param (
 		[Parameter(Mandatory = $true)]
-		[string]$FromDir,
+		[string]$Uri,
 
 		[Parameter(Mandatory = $true)]
-		[string]$ToDir
+		[string]$OutFile
 	)
 
-	$items = @('eagle.ps1', 'version.txt', 'commands', 'lib')
-	foreach ($item in $items) {
-		$src = Join-Path $FromDir $item
-		$dst = Join-Path $ToDir $item
+	Invoke-WebRequest -Uri $Uri -OutFile $OutFile -UseBasicParsing `
+		-ErrorAction Stop
+}
 
-		if (-not (Test-Path $src)) {
-			continue
-		}
+function Test-Cargo {
+	cargo --version > $null 2>&1
+	return $LASTEXITCODE -eq 0
+}
 
-		if (Test-Path $dst) {
-			Remove-Item -Recurse -Force $dst
-		}
+function Install-FromRelease {
+	param (
+		[Parameter(Mandatory = $true)]
+		[string]$Uri,
 
-		Copy-Item -Path $src -Destination $dst -Recurse -Force
+		[Parameter(Mandatory = $true)]
+		[string]$OutFile
+	)
+
+	Log "Downloading: $Uri" 'Cyan'
+	Invoke-DownloadFile -Uri $Uri -OutFile $OutFile
+}
+
+function Install-FromSourceZip {
+	param (
+		[Parameter(Mandatory = $true)]
+		[string]$Uri,
+
+		[Parameter(Mandatory = $true)]
+		[string]$OutFile
+	)
+
+	if (-not (Test-Cargo)) {
+		throw 'cargo not found. Install Rust (rustup) or use a release build.'
 	}
-}
-
-Log 'Starting eagle install...' 'White'
-
-Ensure-Directory -Path $scriptsRoot
-Ensure-Directory -Path $installDir
-
-if ($Dev) {
-	Log 'Installing from local files (Dev mode)...' 'Yellow'
-	Copy-InstallTree -FromDir $PSScriptRoot -ToDir $installDir
-}
-else {
-	Log 'Downloading release zip...' 'Cyan'
 
 	if (Test-Path $tempZipPath) {
 		Remove-Item -Force $tempZipPath
@@ -80,9 +90,10 @@ else {
 		Remove-Item -Recurse -Force $tempExtractPath
 	}
 
-	Invoke-WebRequest -Uri $zipUrl -OutFile $tempZipPath `
-		-UseBasicParsing -ErrorAction Stop
+	Log 'Downloading source zip...' 'Cyan'
+	Invoke-DownloadFile -Uri $Uri -OutFile $tempZipPath
 
+	Log 'Extracting...' 'DarkGray'
 	Expand-Archive -Path $tempZipPath -DestinationPath $tempExtractPath -Force
 
 	$root = Get-ChildItem -Path $tempExtractPath -Directory | Select-Object -First 1
@@ -90,16 +101,73 @@ else {
 		throw 'Zip did not contain a root directory.'
 	}
 
-	Copy-InstallTree -FromDir $root.FullName -ToDir $installDir
+	Log 'Building (cargo build --release)...' 'Yellow'
+	Push-Location $root.FullName
+	try {
+		cargo build --release
+		if ($LASTEXITCODE -ne 0) {
+			throw 'cargo build failed.'
+		}
+
+		$builtExe = Join-Path $root.FullName 'target\release\eagle.exe'
+		if (-not (Test-Path $builtExe)) {
+			throw "Built exe not found: $builtExe"
+		}
+
+		Copy-Item -Force $builtExe $OutFile
+	}
+	finally {
+		Pop-Location
+	}
 }
 
-Log "Installed to: $installDir" 'Green'
+Log 'Starting eagle install...' 'White'
+
+Ensure-Directory -Path $scriptsRoot
+
+if ($Dev) {
+	Log 'Dev mode: building from local repo...' 'Yellow'
+
+	if (-not (Test-Cargo)) {
+		throw 'cargo not found. Install Rust (rustup) to build locally.'
+	}
+
+	Push-Location $PSScriptRoot
+	try {
+		cargo build --release
+		if ($LASTEXITCODE -ne 0) {
+			throw 'cargo build failed.'
+		}
+
+		$builtExe = Join-Path $PSScriptRoot 'target\release\eagle.exe'
+		if (-not (Test-Path $builtExe)) {
+			throw "Built exe not found: $builtExe"
+		}
+
+		Copy-Item -Force $builtExe $installExe
+	}
+	finally {
+		Pop-Location
+	}
+}
+else {
+	try {
+		Install-FromRelease -Uri $releaseExeUrl -OutFile $installExe
+	}
+	catch {
+		Log 'Release download failed. Falling back to source build...' `
+			'Yellow'
+		Install-FromSourceZip -Uri $sourceZipUrl -OutFile $installExe
+	}
+}
+
+Log "Installed: $installExe" 'Green'
 
 if (-not (Test-Path $PROFILE)) {
 	New-Item -ItemType File -Path $PROFILE -Force | Out-Null
 }
 
-$aliasLine = "Set-Alias eagle `"$installDir\\eagle.ps1`""
+$aliasLine = "Set-Alias eagle `"$installExe`""
 if (-not (Select-String -Path $PROFILE -Pattern ([regex]::Escape($aliasLine)) -Quiet)) {
 	Add-Content -Path $PROFILE -Value "`n$aliasLine"
 	Log 'Alias added: eagle' 'Green'
@@ -118,13 +186,12 @@ if ($userPath -notlike "*$scriptsRoot*") {
 	Log "Added to PATH: $scriptsRoot" 'Green'
 }
 else {
-	Log 'PATH already contains C:\\Scripts.' 'DarkGray'
+	Log 'PATH already contains C:\Scripts.' 'DarkGray'
 }
 
-if (-not $Dev) {
-	Remove-Item -Path $tempZipPath -Force -ErrorAction SilentlyContinue
-	Remove-Item -Path $tempExtractPath -Recurse -Force `
-		-ErrorAction SilentlyContinue
-}
+Remove-Item -Path $tempZipPath -Force -ErrorAction SilentlyContinue
+Remove-Item -Path $tempExtractPath -Recurse -Force `
+	-ErrorAction SilentlyContinue
 
 Log 'Done. Restart PowerShell to use eagle.' 'Cyan'
+
