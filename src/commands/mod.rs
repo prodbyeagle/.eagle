@@ -14,7 +14,6 @@ pub fn iter_specs() -> inventory::iter<CommandSpec> {
 }
 
 pub mod create;
-pub mod eagle;
 pub mod eaglecord;
 pub mod help;
 pub mod minecraft;
