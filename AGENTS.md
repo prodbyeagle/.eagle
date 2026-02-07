@@ -252,3 +252,9 @@
   * Lists
   * Code blocks
   * Links
+
+## GITHUB
+
+* Always commit the made changes
+* Always use Conventional Commits Naming Schema
+* Always create an new branch so that the main branch stays safe
