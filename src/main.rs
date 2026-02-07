@@ -1,6 +1,7 @@
 mod cli;
 mod commands;
 mod context;
+mod net;
 mod util;
 
 use clap::error::ErrorKind;

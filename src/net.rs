@@ -1,9 +1,21 @@
+//! Small networking helpers used across commands.
+//!
+//! This module intentionally stays minimal:
+//! - blocking IO (fits the CLI model)
+//! - no global client state
+//! - helpers are pure where possible and tested
+
 use std::io::Read;
+use std::path::Path;
 use std::time::{Duration, Instant};
 
 use serde::de::DeserializeOwned;
 
-pub(super) fn get_json<T: DeserializeOwned>(url: &str) -> anyhow::Result<T> {
+/// Performs a blocking HTTP GET and deserializes the response body as JSON.
+///
+/// Errors if the server response is not `200 OK` or if the body cannot be
+/// deserialized.
+pub fn get_json<T: DeserializeOwned>(url: &str) -> anyhow::Result<T> {
 	let resp = ureq::get(url).call()?;
 	let status = resp.status();
 	if status != 200 {
@@ -18,10 +30,9 @@ pub(super) fn get_json<T: DeserializeOwned>(url: &str) -> anyhow::Result<T> {
 	Ok(json)
 }
 
-pub(super) fn download_file(
-	url: &str,
-	out_path: &std::path::Path,
-) -> anyhow::Result<()> {
+/// Downloads a URL to a file, streaming to disk and showing a simple progress
+/// bar when `Content-Length` is available.
+pub fn download_to_file(url: &str, out_path: &Path) -> anyhow::Result<()> {
 	use std::io::Write;
 
 	let resp = ureq::get(url).call()?;
@@ -113,5 +124,32 @@ fn format_bytes(n: u64) -> String {
 		format!("{:.1}KiB", n_f / KIB)
 	} else {
 		format!("{n}B")
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn format_bytes_bytes() {
+		assert_eq!(format_bytes(0), "0B");
+		assert_eq!(format_bytes(999), "999B");
+	}
+
+	#[test]
+	fn format_bytes_kib() {
+		assert_eq!(format_bytes(1024), "1.0KiB");
+		assert_eq!(format_bytes(1536), "1.5KiB");
+	}
+
+	#[test]
+	fn format_bytes_mib() {
+		assert_eq!(format_bytes(1024 * 1024), "1.0MiB");
+	}
+
+	#[test]
+	fn format_bytes_gib() {
+		assert_eq!(format_bytes(1024 * 1024 * 1024), "1.0GiB");
 	}
 }

@@ -31,6 +31,12 @@ eagle minecraft create --name my-server --type paper --version 1.21.4
 ## Dev
 
 ```powershell
-cd .\eagle-cli
 cargo run -- help
+.\scripts\check.ps1
+```
+
+On macOS/Linux:
+
+```sh
+./scripts/check.sh
 ```

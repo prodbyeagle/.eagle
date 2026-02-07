@@ -2,8 +2,9 @@ use std::path::Path;
 
 use serde::Deserialize;
 
-use super::http;
+use crate::net;
 
+/// Minimal shape of `GET https://meta.fabricmc.net/v2/versions/loader/{game_version}`.
 #[derive(Debug, Clone, Deserialize)]
 struct LoaderCombo {
 	loader: LoaderPart,
@@ -31,18 +32,12 @@ pub(super) fn download_fabric_server(
 	println!("Downloading Fabric {version}...");
 
 	let url = format!("https://meta.fabricmc.net/v2/versions/loader/{version}");
-	let combos = http::get_json::<Vec<LoaderCombo>>(&url)?;
+	let combos = net::get_json::<Vec<LoaderCombo>>(&url)?;
 	if combos.is_empty() {
 		anyhow::bail!("No Fabric loader versions found for {version}");
 	}
 
-	let best = combos
-		.iter()
-		.find(|c| {
-			c.loader.stable.unwrap_or(true)
-				&& c.installer.stable.unwrap_or(true)
-		})
-		.or_else(|| combos.first())
+	let best = pick_best_combo(&combos)
 		.ok_or_else(|| anyhow::anyhow!("No Fabric loader versions found"))?;
 
 	let loader = &best.loader.version;
@@ -51,6 +46,67 @@ pub(super) fn download_fabric_server(
 	let url = format!(
 		"https://meta.fabricmc.net/v2/versions/loader/{version}/{loader}/{installer}/server/jar"
 	);
-	http::download_file(&url, jar_path)?;
+	net::download_to_file(&url, jar_path)?;
 	Ok(())
+}
+
+fn pick_best_combo(combos: &[LoaderCombo]) -> Option<&LoaderCombo> {
+	combos
+		.iter()
+		.find(|c| {
+			c.loader.stable.unwrap_or(true)
+				&& c.installer.stable.unwrap_or(true)
+		})
+		.or_else(|| combos.first())
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn picks_stable_combo_when_available() {
+		let combos = vec![
+			LoaderCombo {
+				loader: LoaderPart {
+					version: "0.16.0".to_string(),
+					stable: Some(false),
+				},
+				installer: InstallerPart {
+					version: "1.0.0".to_string(),
+					stable: Some(true),
+				},
+			},
+			LoaderCombo {
+				loader: LoaderPart {
+					version: "0.15.0".to_string(),
+					stable: Some(true),
+				},
+				installer: InstallerPart {
+					version: "1.0.0".to_string(),
+					stable: Some(true),
+				},
+			},
+		];
+
+		let best = pick_best_combo(&combos).unwrap();
+		assert_eq!(best.loader.version, "0.15.0");
+	}
+
+	#[test]
+	fn falls_back_to_first_combo() {
+		let combos = vec![LoaderCombo {
+			loader: LoaderPart {
+				version: "0.16.0".to_string(),
+				stable: Some(false),
+			},
+			installer: InstallerPart {
+				version: "1.0.0".to_string(),
+				stable: Some(false),
+			},
+		}];
+
+		let best = pick_best_combo(&combos).unwrap();
+		assert_eq!(best.loader.version, "0.16.0");
+	}
 }

@@ -6,7 +6,6 @@ use crate::context::Context;
 mod create;
 mod fabric;
 mod fs;
-mod http;
 mod paper;
 mod start;
 
