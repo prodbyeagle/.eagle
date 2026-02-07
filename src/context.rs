@@ -1,6 +1,7 @@
 use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone)]
+/// Runtime information available to all commands.
 pub struct Context {
 	pub exe_path: PathBuf,
 	pub exe_dir: PathBuf,
@@ -9,6 +10,7 @@ pub struct Context {
 }
 
 impl Context {
+	/// Constructs a [`Context`] by discovering the current executable path.
 	pub fn new() -> anyhow::Result<Self> {
 		let exe_path = std::env::current_exe()?;
 		let exe_dir = exe_path

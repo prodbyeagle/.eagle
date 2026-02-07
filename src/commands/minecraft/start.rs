@@ -1,32 +1,15 @@
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
-use clap::{Arg, ArgMatches, Command};
+use clap::ArgMatches;
 use dialoguer::Select;
 
-use crate::commands::CommandSpec;
-use crate::context::Context;
+use super::fs;
 
-fn build() -> Command {
-	Command::new("minecraft")
-		.about("Start a Minecraft server from ~/Documents/mc-servers")
-		.alias("m")
-		.arg(
-			Arg::new("ram_mb")
-				.long("ram-mb")
-				.help("RAM in MB")
-				.value_parser(clap::value_parser!(u32))
-				.required(false),
-		)
-}
-
-fn run(matches: &ArgMatches, _: &Context) -> anyhow::Result<()> {
+pub(super) fn run_start(matches: &ArgMatches) -> anyhow::Result<()> {
 	let ram_mb = *matches.get_one::<u32>("ram_mb").unwrap_or(&8192);
 
-	let root = documents_dir()
-		.ok_or_else(|| anyhow::anyhow!("Could not resolve Documents dir"))?
-		.join("mc-servers");
-
-	let servers = find_servers(&root)?;
+	let root = fs::servers_root()?;
+	let servers = fs::find_servers(&root)?;
 	if servers.is_empty() {
 		anyhow::bail!("No servers found in: {}", root.display());
 	}
@@ -78,33 +61,6 @@ fn run(matches: &ArgMatches, _: &Context) -> anyhow::Result<()> {
 	Ok(())
 }
 
-fn documents_dir() -> Option<PathBuf> {
-	directories::UserDirs::new()
-		.and_then(|u| u.document_dir().map(|p| p.to_path_buf()))
-}
-
-fn find_servers(root: &Path) -> anyhow::Result<Vec<PathBuf>> {
-	if !root.exists() {
-		return Ok(Vec::new());
-	}
-
-	let mut out = Vec::new();
-	for entry in std::fs::read_dir(root)? {
-		let entry = entry?;
-		let path = entry.path();
-		if !path.is_dir() {
-			continue;
-		}
-
-		if path.join("server.jar").exists() {
-			out.push(path);
-		}
-	}
-
-	out.sort();
-	Ok(out)
-}
-
 fn build_java_args(ram_mb: u32, jar_path: &Path) -> Vec<String> {
 	let ram = format!("-Xmx{ram_mb}M");
 	let ram2 = format!("-Xms{ram_mb}M");
@@ -138,11 +94,4 @@ fn build_java_args(ram_mb: u32, jar_path: &Path) -> Vec<String> {
 	];
 
 	args
-}
-
-inventory::submit! {
-	CommandSpec {
-		command: build,
-		run,
-	}
 }

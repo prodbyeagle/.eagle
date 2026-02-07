@@ -1,5 +1,6 @@
 use std::process::{Command, ExitStatus, Stdio};
 
+/// Runs a command inheriting stdin/stdout/stderr.
 pub fn run_inherit(program: &str, args: &[&str]) -> anyhow::Result<ExitStatus> {
 	let mut cmd = Command::new(program);
 	cmd.args(args)
@@ -10,6 +11,7 @@ pub fn run_inherit(program: &str, args: &[&str]) -> anyhow::Result<ExitStatus> {
 	Ok(cmd.status()?)
 }
 
+/// Runs a command inheriting stdin/stdout/stderr from a specific working dir.
 pub fn run_inherit_with_dir(
 	program: &str,
 	args: &[&str],
@@ -25,6 +27,8 @@ pub fn run_inherit_with_dir(
 	Ok(cmd.status()?)
 }
 
+/// Runs a command and returns stdout as UTF-8. If it fails, includes stderr in
+/// the error message.
 pub fn run_capture(program: &str, args: &[&str]) -> anyhow::Result<String> {
 	let out = Command::new(program).args(args).output()?;
 	if !out.status.success() {
