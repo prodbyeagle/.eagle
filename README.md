@@ -33,6 +33,9 @@ eagle minecraft create --name my-server --type paper --version 1.21.4
 ```powershell
 cargo run -- help
 .\scripts\check.ps1
+.\scripts\release.ps1 -SetVersion '3.1.0'
+# dry run:
+.\scripts\release.ps1 -SetVersion '3.1.0' -DryRun
 ```
 
 On macOS/Linux:
